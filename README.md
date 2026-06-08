@@ -29,14 +29,28 @@ A desktop tool for **Blade & Soul TW Server** to track dungeon runs, manage mate
 ## Requirements 執行需求
 
 - Windows 10 / 11 (x64)
-- [.NET 6.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- [.NET 6.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)（免安裝版需要，安裝器版本會自動提示）
 
 ---
 
 ## Installation 安裝方式
 
-1. 至 [Releases](../../releases) 下載最新版本的 `洛洛劍靈材料追蹤器.exe`
-2. 將 exe 與 `Data/` 資料夾放在同一目錄下
+### 方式一：安裝器（推薦）Installer (Recommended)
+
+至 [Releases](../../releases) 下載 `Setup_洛洛劍靈材料追蹤器_vX.X.X.exe`，執行後依指示完成安裝。  
+Download `Setup_洛洛劍靈材料追蹤器_vX.X.X.exe` from [Releases](../../releases) and follow the setup wizard.
+
+- 安裝器支援繁體中文 / 簡體中文 / English 介面
+- Installer UI available in Traditional Chinese / Simplified Chinese / English
+- 自動建立桌面捷徑與開始功能表項目
+- Creates desktop shortcut and Start Menu entry automatically
+- 提供標準解除安裝程式
+- Includes a standard uninstaller
+
+### 方式二：免安裝版 Portable
+
+1. 至 [Releases](../../releases) 下載 `洛洛劍靈材料追蹤器.exe`
+2. 建立一個資料夾，將 exe 與 `Data/` 資料夾放在同一目錄下
 3. 直接執行 exe，無需安裝
 
 ---
@@ -63,6 +77,9 @@ Game data is stored as JSON files in the `Data/` folder next to the exe. Use the
 %AppData%\BnsMaterialTracker\save.json
 ```
 
+解除安裝程式不會刪除此檔案，重新安裝後資料仍會保留。  
+The uninstaller does not remove this file — your data is preserved across reinstalls.
+
 ---
 
 ## Build from Source 從原始碼建置
@@ -75,6 +92,12 @@ dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=tr
 
 需要 [.NET 6.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)。
 
+如需重新打包安裝器，請安裝 [Inno Setup 6](https://jrsoftware.org/isdl.php) 後執行：
+
+```bash
+ISCC installer.iss
+```
+
 ---
 
 ## Tech Stack
@@ -82,6 +105,7 @@ dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=tr
 - C# / WPF (.NET 6.0)
 - MVVM pattern
 - System.Text.Json
+- [Inno Setup 6](https://jrsoftware.org/isdl.php) (installer)
 
 ---
 
