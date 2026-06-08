@@ -1,4 +1,4 @@
-# Aurora's BnS Material Tracker — Build Script
+﻿# Aurora's BnS Material Tracker — Build Script
 # Publishes the app, builds the installer, zips the portable version,
 # and creates/updates a GitHub Release with both files.
 
@@ -61,6 +61,9 @@ if (-not $iscc) {
 }
 
 New-Item -ItemType Directory -Force "$Root\installer_output" | Out-Null
+# Clear previous outputs so old versions don't pile up
+Get-ChildItem "$Root\installer_output" -File -ErrorAction SilentlyContinue |
+    Remove-Item -Force -ErrorAction SilentlyContinue
 & $iscc /DAppVersion=$Version "$Root\installer.iss"
 if ($LASTEXITCODE -ne 0) { Write-Host "Installer build failed." -ForegroundColor Red; exit 1 }
 
