@@ -37,8 +37,8 @@ A desktop tool for **Blade & Soul TW Server** to track dungeon runs, manage mate
 
 ### 方式一：安裝器（推薦）Installer (Recommended)
 
-至 [Releases](../../releases) 下載 `Setup_洛洛劍靈材料追蹤器_vX.X.X.exe`，執行後依指示完成安裝。  
-Download `Setup_洛洛劍靈材料追蹤器_vX.X.X.exe` from [Releases](../../releases) and follow the setup wizard.
+至 [Releases](../../releases) 下載 `Setup_Aurora_BnS_Material_Tracker_vX.X.X.exe`，執行後依指示完成安裝。  
+Download `Setup_Aurora_BnS_Material_Tracker_vX.X.X.exe` from [Releases](../../releases) and follow the setup wizard.
 
 - 安裝器支援繁體中文 / 簡體中文 / English 介面
 - Installer UI available in Traditional Chinese / Simplified Chinese / English
@@ -49,7 +49,7 @@ Download `Setup_洛洛劍靈材料追蹤器_vX.X.X.exe` from [Releases](../../re
 
 ### 方式二：免安裝版 Portable
 
-1. 至 [Releases](../../releases) 下載 `洛洛劍靈材料追蹤器.exe`
+1. 至 [Releases](../../releases) 下載 `Aurora_BnS_Material_Tracker_vX.X.X_portable.exe`
 2. 建立一個資料夾，將 exe 與 `Data/` 資料夾放在同一目錄下
 3. 直接執行 exe，無需安裝
 
