@@ -20,11 +20,12 @@ namespace BnsMaterialTracker.Services
 
     public class DungeonScanResult
     {
-        public string               DungeonName { get; set; } = "";
-        public int                  PartySize   { get; set; } = 0;
-        public string               Mode        { get; set; } = "hero";  // "hero" | "demon"
-        public List<DungeonSection> Sections    { get; set; } = new();
-        public string               RawOcrText  { get; set; } = "";      // for debugging
+        public string               DungeonName    { get; set; } = "";
+        public int                  PartySize      { get; set; } = 0;
+        public string               Mode           { get; set; } = "hero";  // "hero" | "demon"
+        public List<DungeonSection> Sections       { get; set; } = new();
+        public string               RawOcrText     { get; set; } = "";      // for debugging
+        public List<string>         DetectedTokens { get; set; } = new();   // word-level OCR tokens (material candidates)
     }
 
     public static class DungeonScanService
@@ -42,10 +43,47 @@ namespace BnsMaterialTracker.Services
             if (soft == null) return null;
 
             var ocrResult = await engine.RecognizeAsync(soft);
-            var result = Parse(ocrResult.Text);
+            var result    = Parse(ocrResult.Text);
             result.RawOcrText = ocrResult.Text;
+
+            // ── Word-level post-processing ──────────────────────────────────
+            var allWords = ocrResult.Lines.SelectMany(l => l.Words).ToList();
+
+            // Dungeon name: use the topmost-leftmost CJK word (title text in BnS UI
+            // is always at the top-left in a larger font, so it's a separate OcrWord).
+            var titleWord = allWords
+                .Where(w => Regex.IsMatch(w.Text.Trim(), @"[一-鿿㐀-䶿]"))
+                .OrderBy(w => w.BoundingRect.Top)
+                .ThenBy(w => w.BoundingRect.Left)
+                .FirstOrDefault();
+
+            if (titleWord != null)
+            {
+                string wt = titleWord.Text.Trim();
+                // Accept as name only if it's a short pure-CJK token
+                if (Regex.IsMatch(wt, @"^[一-鿿㐀-䶿]{2,6}$"))
+                    result.DungeonName = wt;
+                // else fall back to the Parse-based extraction already done
+            }
+
+            // Material candidates: word-level tokens that look like item names
+            result.DetectedTokens = allWords
+                .Select(w => w.Text.Trim())
+                .Where(t => Regex.IsMatch(t, @"^[一-鿿㐀-䶿][一-鿿㐀-䶿\d]*[一-鿿㐀-䶿]$"))
+                .Where(t => t.Length >= 2 && t.Length <= 14)
+                .Where(t => !KnownHeaderWords.Contains(t) && !IsNoiseItem(t))
+                .Distinct()
+                .ToList();
+
             return result;
         }
+
+        private static readonly HashSet<string> KnownHeaderWords = new()
+        {
+            "共通獎勵","入門獎勵","一般獎勵","熟練獎勵","熱練獎勵",
+            "共通類","入門類","一般類","熟練類","熱練類",
+            "其他","服裝","其他服裝",
+        };
 
         // ── Parser ─────────────────────────────────────────────────────────
         //
@@ -67,14 +105,14 @@ namespace BnsMaterialTracker.Services
             string compact = Regex.Replace(rawText, @"\s", "");
 
             // ── Locate section headers ──────────────────────────────────────
-            // Include 熱練獎勵 as a variant because OCR often reads 熟 as 熱
+            // Include 熱練 (OCR: 熟→熱) and X類 (OCR: 獎勵→類) variants
             var headerDefs = new[]
             {
-                ("共通獎勵", "common"),
-                ("入門獎勵", "easy"),
-                ("一般獎勵", "normal"),
-                ("熟練獎勵", "skilled"),
-                ("熱練獎勵", "skilled"),
+                ("共通獎勵", "common"),   ("共通類", "common"),
+                ("入門獎勵", "easy"),     ("入門類", "easy"),
+                ("一般獎勵", "normal"),   ("一般類", "normal"),
+                ("熟練獎勵", "skilled"),  ("熟練類", "skilled"),
+                ("熱練獎勵", "skilled"),  ("熱練類", "skilled"),
             };
 
             var found     = new List<(int idx, int len, string diff, string label)>();

@@ -586,6 +586,22 @@ namespace BnsMaterialTracker.Views
         {
             if (_dungScanResult == null) return;
             DungEntryList.ItemsSource = BuildPreviewEntries(_dungScanResult);
+
+            // Refresh token list to remove any tokens that were just added as materials
+            DetectedTokenList.ItemsSource = _dungScanResult.DetectedTokens
+                .Where(t => !MaterialList.Any(m => m.Name == t) &&
+                            !_pendingNewMaterials.Any(m => m.Name == t))
+                .ToList();
+        }
+
+        private void BtnDetectedToken_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.Content is string name)
+            {
+                TxtNewMatName.Text = name;
+                TxtNewMatName.Focus();
+                TxtNewMatName.SelectAll();
+            }
         }
 
         private void BtnDungImport_Click(object sender, RoutedEventArgs e)
@@ -637,6 +653,12 @@ namespace BnsMaterialTracker.Views
             // Show raw OCR text for debugging
             TxtOcrRaw.Text         = _dungScanResult.RawOcrText;
             ExpanderOcr.Visibility = Visibility.Visible;
+
+            // Show detected tokens that are NOT already in MaterialList
+            DetectedTokenList.ItemsSource = _dungScanResult.DetectedTokens
+                .Where(t => !MaterialList.Any(m => m.Name == t) &&
+                            !_pendingNewMaterials.Any(m => m.Name == t))
+                .ToList();
 
             var entries = BuildPreviewEntries(_dungScanResult);
             DungEntryList.ItemsSource = entries;
