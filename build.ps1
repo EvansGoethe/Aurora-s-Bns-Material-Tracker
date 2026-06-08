@@ -80,6 +80,13 @@ Remove-Item $ZipPath -Force -ErrorAction SilentlyContinue
 Compress-Archive -Path "$ZipStaging\*" -DestinationPath $ZipPath
 Remove-Item $ZipStaging -Recurse -Force
 
+# ── 3c. Chinese-named local copies (no version, NOT uploaded) ──
+Write-Host "     Creating Chinese-named local copies..." -ForegroundColor Cyan
+$CnSetup = "$Root\installer_output\洛洛劍靈材料追蹤器_安裝版.exe"
+$CnZip   = "$Root\installer_output\洛洛劍靈材料追蹤器_免安裝版.zip"
+Copy-Item $SetupFile $CnSetup -Force
+Copy-Item $ZipPath   $CnZip   -Force
+
 # ── 4. GitHub Release ─────────────────────────────────────────
 Write-Host "[4/4] Publishing GitHub Release $Tag..." -ForegroundColor Cyan
 
@@ -107,6 +114,8 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Done!" -ForegroundColor Green
     Write-Host "  Setup    : $SetupFile"
     Write-Host "  Portable : $ZipPath"
+    Write-Host "  中文安裝版 : $CnSetup"
+    Write-Host "  中文免安裝 : $CnZip"
     Write-Host "  Release  : https://github.com/$Repo/releases/tag/$Tag"
 } else {
     Write-Host "GitHub Release failed." -ForegroundColor Red
