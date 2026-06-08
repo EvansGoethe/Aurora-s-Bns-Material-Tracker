@@ -571,6 +571,10 @@ namespace BnsMaterialTracker.Views
 
             TxtDungName.Text = _dungScanResult.DungeonName;
 
+            // Show raw OCR text for debugging
+            TxtOcrRaw.Text          = _dungScanResult.RawOcrText;
+            ExpanderOcr.Visibility  = Visibility.Visible;
+
             var entries = BuildPreviewEntries(_dungScanResult);
             DungEntryList.ItemsSource = entries;
 

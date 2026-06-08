@@ -537,6 +537,17 @@
             <TextBlock x:Name="TxtDungUnmatched"
                        FontSize="11" Foreground="Orange"
                        Margin="0,4,0,0" Visibility="Collapsed" TextWrapping="Wrap"/>
+
+            <!-- Raw OCR text (debug, collapsible) -->
+            <Expander x:Name="ExpanderOcr" Header="OCR 原始文字（debug）"
+                      FontSize="11" Foreground="{StaticResource TextMuted}"
+                      Margin="0,8,0,0" Visibility="Collapsed">
+              <TextBox x:Name="TxtOcrRaw" IsReadOnly="True" TextWrapping="Wrap"
+                       MaxHeight="120" FontSize="10" Margin="0,4,0,0"
+                       VerticalScrollBarVisibility="Auto"
+                       Background="{StaticResource BgApp}"
+                       Foreground="{StaticResource TextMuted}"/>
+            </Expander>
           </StackPanel>
 
           <!-- Confirm / Cancel -->

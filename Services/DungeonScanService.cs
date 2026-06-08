@@ -23,6 +23,7 @@ namespace BnsMaterialTracker.Services
         public int                  PartySize   { get; set; } = 0;
         public string               Mode        { get; set; } = "hero";  // "hero" | "demon"
         public List<DungeonSection> Sections    { get; set; } = new();
+        public string               RawOcrText  { get; set; } = "";      // for debugging
     }
 
     public static class DungeonScanService
@@ -50,7 +51,9 @@ namespace BnsMaterialTracker.Services
 
         public static async Task<DungeonScanResult?> ScanAsync(BitmapSource screenshot)
         {
-            var engine = OcrEngine.TryCreateFromUserProfileLanguages()
+            // Prefer Chinese engines since dungeon info pages are in Chinese
+            var engine = TryChineseEngine()
+                      ?? OcrEngine.TryCreateFromUserProfileLanguages()
                       ?? TryAnyEngine();
             if (engine == null) return null;
 
@@ -58,7 +61,9 @@ namespace BnsMaterialTracker.Services
             if (soft == null) return null;
 
             var ocrResult = await engine.RecognizeAsync(soft);
-            return Parse(ocrResult.Text);
+            var result = Parse(ocrResult.Text);
+            result.RawOcrText = ocrResult.Text;
+            return result;
         }
 
         // ── Parser ─────────────────────────────────────────────────────────
@@ -143,6 +148,24 @@ namespace BnsMaterialTracker.Services
         }
 
         // ── Helpers ────────────────────────────────────────────────────────
+
+        private static OcrEngine? TryChineseEngine()
+        {
+            foreach (var tag in new[] { "zh-TW", "zh-Hant", "zh-Hans", "zh-CN", "zh" })
+            {
+                try
+                {
+                    var lang = new Windows.Globalization.Language(tag);
+                    if (OcrEngine.IsLanguageSupported(lang))
+                    {
+                        var e = OcrEngine.TryCreateFromLanguage(lang);
+                        if (e != null) return e;
+                    }
+                }
+                catch { }
+            }
+            return null;
+        }
 
         private static OcrEngine? TryAnyEngine()
         {
