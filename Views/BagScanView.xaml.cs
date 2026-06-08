@@ -20,7 +20,7 @@ namespace BnsMaterialTracker.Views
         // ── State ──────────────────────────────────────────────────────
         private AppViewModel  _vm          = null!;
         private BitmapSource? _screenshot;   // currently loaded screenshot (full res)
-        private int           _pendingX;     // image coords of last click, waiting for material pick
+        private int           _pendingX;     // image pixel coords of last click, waiting for material pick
         private int           _pendingY;
         private bool          _picking;      // picker overlay visible?
         private int           _cellSize     = 64;
@@ -138,8 +138,14 @@ namespace BnsMaterialTracker.Views
 
                 _screenshot = bmp;
                 ImgScreenshot.Source = bmp;
-                ImgScreenshot.Visibility  = Visibility.Visible;
-                OverlayCanvas.Visibility  = Visibility.Visible;
+
+                // Size the container to exact pixel dimensions.
+                // The Viewbox then scales it uniformly to fit the panel.
+                // This makes Canvas coordinates 1:1 with image pixels — no conversion needed.
+                ImageContainer.Width  = bmp.PixelWidth;
+                ImageContainer.Height = bmp.PixelHeight;
+
+                VbScreenshot.Visibility    = Visibility.Visible;
                 TxtNoScreenshot.Visibility = Visibility.Collapsed;
 
                 DrawOverlay();
@@ -157,12 +163,14 @@ namespace BnsMaterialTracker.Views
         {
             if (_screenshot == null || _picking) return;
 
-            var clickPt = e.GetPosition(ImgScreenshot);
-            var imgCoords = DisplayToImage(ImgScreenshot, _screenshot, clickPt);
-            if (imgCoords == null) return;
+            // Because ImageContainer is PixelWidth × PixelHeight and Stretch="Fill",
+            // GetPosition(ImgScreenshot) returns pixel coordinates directly.
+            var pt = e.GetPosition(ImgScreenshot);
+            int px = Math.Clamp((int)pt.X, 0, _screenshot.PixelWidth  - 1);
+            int py = Math.Clamp((int)pt.Y, 0, _screenshot.PixelHeight - 1);
 
-            _pendingX = imgCoords.Value.x;
-            _pendingY = imgCoords.Value.y;
+            _pendingX = px;
+            _pendingY = py;
 
             // Build preview for the picker
             var previewPx = BagScanService.CreateTemplate(_screenshot, _pendingX, _pendingY);
@@ -244,6 +252,8 @@ namespace BnsMaterialTracker.Views
                 _cellSize = sz;
                 _vm?.Settings.Let(s => { s.BagCellSize = _cellSize; });
                 _vm?.UpdateSettings();
+                DrawOverlay();
+                DrawScanOverlay();
             }
         }
 
@@ -300,6 +310,7 @@ namespace BnsMaterialTracker.Views
                 TxtScanStatus.Text  = $"✅ {foundCount} / {_lastResults.Count}";
                 BtnApply.IsEnabled  = foundCount > 0;
 
+                DrawOverlay();
                 DrawScanOverlay();
             }
             catch (Exception ex)
@@ -330,94 +341,78 @@ namespace BnsMaterialTracker.Views
         }
 
         // ── Overlay drawing ────────────────────────────────────────────
+        //
+        // Because ImageContainer is sized to the screenshot's pixel dimensions and
+        // the Image uses Stretch="Fill", the Canvas coordinate system is 1:1 with
+        // image pixels.  No ImageToDisplay / DisplayToImage conversion is needed.
 
         private void DrawOverlay()
         {
             OverlayCanvas.Children.Clear();
-            if (_screenshot == null || ImgScreenshot.ActualWidth <= 0) return;
+            if (_screenshot == null) return;
 
             foreach (var tmpl in _vm.Settings.BagTemplates)
             {
-                // Cell bounding box in image coords
+                // Cell bounding box in IMAGE PIXEL coordinates (= Canvas coordinates)
                 int cellX = tmpl.CenterX - _cellSize / 2;
                 int cellY = tmpl.CenterY - _cellSize / 2;
 
-                var (dx, dy, dw, dh) = ImageToDisplay(
-                    ImgScreenshot, _screenshot,
-                    cellX, cellY, _cellSize, _cellSize);
-
-                // Green box
+                // Green registration box
                 var rect = new Rectangle
                 {
-                    Width           = dw,
-                    Height          = dh,
+                    Width           = _cellSize,
+                    Height          = _cellSize,
                     Stroke          = Brushes.LimeGreen,
                     StrokeThickness = 2,
                 };
-                Canvas.SetLeft(rect, dx);
-                Canvas.SetTop(rect,  dy);
+                Canvas.SetLeft(rect, cellX);
+                Canvas.SetTop(rect,  cellY);
                 OverlayCanvas.Children.Add(rect);
 
-                // Material name label (shows image-space coords for debugging)
+                // Material name label below the box
                 var label = new TextBlock
                 {
-                    Text       = _vm.GetMatIcon(tmpl.MaterialId) + " " + _vm.GetMatName(tmpl.MaterialId)
-                               + $" [{tmpl.CenterX},{tmpl.CenterY}]",
+                    Text       = _vm.GetMatIcon(tmpl.MaterialId) + " " + _vm.GetMatName(tmpl.MaterialId),
                     FontSize   = 10,
                     Foreground = Brushes.LimeGreen,
                     Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
                 };
-                Canvas.SetLeft(label, dx);
-                Canvas.SetTop(label,  dy + dh);
+                Canvas.SetLeft(label, cellX);
+                Canvas.SetTop(label,  cellY + _cellSize);
                 OverlayCanvas.Children.Add(label);
-
-                // Red dot at exact center point — should appear where user clicked
-                var (cx, cy, _, _) = ImageToDisplay(ImgScreenshot, _screenshot,
-                                                     tmpl.CenterX, tmpl.CenterY, 1, 1);
-                var dot = new System.Windows.Shapes.Ellipse
-                {
-                    Width = 8, Height = 8, Fill = Brushes.Red,
-                };
-                Canvas.SetLeft(dot, cx - 4);
-                Canvas.SetTop(dot,  cy - 4);
-                OverlayCanvas.Children.Add(dot);
             }
         }
 
         /// <summary>
-        /// Draw cyan boxes where templates were FOUND during last scan.
-        /// Called after scan completes (in addition to the green registration boxes).
+        /// Draw cyan dashed boxes at the positions where templates were FOUND during
+        /// the last scan.  Called after scan completes (green registration boxes remain).
         /// </summary>
         private void DrawScanOverlay()
         {
-            if (_screenshot == null || ImgScreenshot.ActualWidth <= 0) return;
+            if (_screenshot == null) return;
 
-            // Use cellSize so the cyan box aligns with the green registration box
             foreach (var r in _lastResults)
             {
                 if (!r.Found) continue;
 
-                // FoundX/Y is the template top-left (cx-20, cy-20).
+                // FoundX/Y is template top-left (cx-20, cy-20 in pixel space).
                 // Cell top-left = (cx - cellSize/2, cy - cellSize/2)
                 //               = (FoundX + 20 - cellSize/2, FoundY + 20 - cellSize/2)
-                int ts      = BagScanService.TemplateSize;
-                int cellX   = r.FoundX + ts / 2 - _cellSize / 2;
-                int cellY   = r.FoundY + ts / 2 - _cellSize / 2;
+                int ts    = BagScanService.TemplateSize;
+                int cellX = r.FoundX + ts / 2 - _cellSize / 2;
+                int cellY = r.FoundY + ts / 2 - _cellSize / 2;
 
-                var (dx, dy, dw, dh) = ImageToDisplay(
-                    ImgScreenshot, _screenshot, cellX, cellY, _cellSize, _cellSize);
-
-                // Cyan dashed box (on top of green registration box)
+                // Cyan dashed box
                 var rect = new Rectangle
                 {
-                    Width           = dw,
-                    Height          = dh,
+                    Width           = _cellSize,
+                    Height          = _cellSize,
                     Stroke          = Brushes.Cyan,
                     StrokeThickness = 2,
                     StrokeDashArray = new DoubleCollection { 4, 3 },
                 };
-                Canvas.SetLeft(rect, dx);
-                Canvas.SetTop(rect,  dy);
+                Canvas.SetLeft(rect, cellX);
+                Canvas.SetTop(rect,  cellY);
                 OverlayCanvas.Children.Add(rect);
 
                 // Score + quantity label above the box
@@ -429,58 +424,15 @@ namespace BnsMaterialTracker.Views
                     Foreground = Brushes.Cyan,
                     Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
                 };
-                Canvas.SetLeft(lbl, dx);
-                Canvas.SetTop(lbl,  dy - 14);
+                Canvas.SetLeft(lbl, cellX);
+                Canvas.SetTop(lbl,  cellY - 14);
                 OverlayCanvas.Children.Add(lbl);
             }
         }
 
         private void ImgScreenshot_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            DrawOverlay();
-            DrawScanOverlay();
-        }
-
-        // ── Coordinate helpers ─────────────────────────────────────────
-
-        /// <summary>Convert display click position → image pixel coordinates.</summary>
-        private static (int x, int y)? DisplayToImage(
-            Image ctrl, BitmapSource bmp, Point clickPt)
-        {
-            if (ctrl.ActualWidth <= 0 || ctrl.ActualHeight <= 0) return null;
-
-            double scaleX = ctrl.ActualWidth  / bmp.PixelWidth;
-            double scaleY = ctrl.ActualHeight / bmp.PixelHeight;
-            double scale  = Math.Min(scaleX, scaleY);
-
-            double dispW  = bmp.PixelWidth  * scale;
-            double dispH  = bmp.PixelHeight * scale;
-            double offX   = (ctrl.ActualWidth  - dispW) / 2;
-            double offY   = (ctrl.ActualHeight - dispH) / 2;
-
-            double relX = clickPt.X - offX;
-            double relY = clickPt.Y - offY;
-
-            if (relX < 0 || relX >= dispW || relY < 0 || relY >= dispH) return null;
-
-            return (
-                Math.Clamp((int)(relX / scale), 0, bmp.PixelWidth  - 1),
-                Math.Clamp((int)(relY / scale), 0, bmp.PixelHeight - 1));
-        }
-
-        /// <summary>Convert image-space rectangle → display-space coordinates.</summary>
-        private static (double x, double y, double w, double h) ImageToDisplay(
-            Image ctrl, BitmapSource bmp,
-            int imgX, int imgY, int imgW, int imgH)
-        {
-            double scaleX = ctrl.ActualWidth  / bmp.PixelWidth;
-            double scaleY = ctrl.ActualHeight / bmp.PixelHeight;
-            double scale  = Math.Min(scaleX, scaleY);
-
-            double offX = (ctrl.ActualWidth  - bmp.PixelWidth  * scale) / 2;
-            double offY = (ctrl.ActualHeight - bmp.PixelHeight * scale) / 2;
-
-            return (offX + imgX * scale, offY + imgY * scale, imgW * scale, imgH * scale);
+            // With Viewbox approach the canvas is in pixel space — no redraw needed on resize.
         }
     }
 

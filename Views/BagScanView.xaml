@@ -65,14 +65,19 @@
                      Foreground="{StaticResource TextMuted}"
                      Visibility="Visible"/>
 
-          <!-- Screenshot + overlay canvas -->
-          <Image x:Name="ImgScreenshot" Stretch="Uniform"
-                 Cursor="Cross"
-                 MouseLeftButtonDown="ImgScreenshot_Click"
-                 SizeChanged="ImgScreenshot_SizeChanged"
-                 Visibility="Collapsed"/>
-          <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False"
-                  Visibility="Collapsed"/>
+          <!--
+            Viewbox scales ImageContainer uniformly to fit the panel.
+            ImageContainer is sized to the screenshot's PIXEL dimensions,
+            so Canvas coordinates are 1:1 with image pixels — no conversion math needed.
+          -->
+          <Viewbox x:Name="VbScreenshot" Stretch="Uniform" Visibility="Collapsed">
+            <Grid x:Name="ImageContainer" Width="1" Height="1">
+              <Image x:Name="ImgScreenshot" Stretch="Fill"
+                     Cursor="Cross"
+                     MouseLeftButtonDown="ImgScreenshot_Click"/>
+              <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False"/>
+            </Grid>
+          </Viewbox>
         </Grid>
       </Border>
 
