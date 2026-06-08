@@ -12,40 +12,37 @@ using Windows.Media.Ocr;
 
 namespace BnsMaterialTracker.Services
 {
-    /// <summary>Result of scanning one registered template in a screenshot.</summary>
     public class ScanResult
     {
         public string MaterialId { get; set; } = "";
         public string MatName    { get; set; } = "";
         public string MatIcon    { get; set; } = "📦";
-        public int    Quantity   { get; set; } = -1;  // -1 = not found / OCR failed
+        public int    Quantity   { get; set; } = -1;
         public bool   Found      { get; set; } = false;
-        public double MatchScore { get; set; } = 0;   // 0-1, higher = more confident
+        public double MatchScore { get; set; } = 0;
     }
 
     public static class BagScanService
     {
-        // ── Constants ─────────────────────────────────────────────────
-
-        /// <summary>Templates are stored as 40×40 Bgr32 images.</summary>
+        // Templates are stored as TemplateSize×TemplateSize Bgr32 images.
         public const int TemplateSize = 40;
 
-        /// <summary>Match below this MSE (per channel) is considered a hit.</summary>
-        public const double MseThreshold = 1500.0;
+        // MSE per channel below this = match.
+        // Identical images → 0; same icon, slight JPEG noise → ~100-800;
+        // different icons → typically > 3000.
+        public const double MseThreshold = 1800.0;
 
-        // ── Template creation ─────────────────────────────────────────
+        // ── Template creation ──────────────────────────────────────────────
 
         /// <summary>
-        /// Crop a 40×40 region centered at (cx, cy), slightly above center
-        /// to avoid the quantity number in the bottom-left of the cell.
+        /// Crop a TemplateSize×TemplateSize region centered at (cx, cy) from the screenshot.
+        /// Shifts 4px upward to avoid the quantity number at the very bottom-left of the cell.
         /// Returns raw Bgr32 bytes (TemplateSize * TemplateSize * 4).
         /// </summary>
         public static byte[] CreateTemplate(BitmapSource screenshot, int cx, int cy)
         {
-            // Shift up slightly so number (bottom-left) is not included
-            int y = cy - 4;
             int x0 = Math.Max(0, cx - TemplateSize / 2);
-            int y0 = Math.Max(0, y  - TemplateSize / 2);
+            int y0 = Math.Max(0, cy - TemplateSize / 2 - 4);   // shift up 4px
             int w  = Math.Min(TemplateSize, screenshot.PixelWidth  - x0);
             int h  = Math.Min(TemplateSize, screenshot.PixelHeight - y0);
 
@@ -53,7 +50,6 @@ namespace BnsMaterialTracker.Services
 
             BitmapSource region = new CroppedBitmap(screenshot, new Int32Rect(x0, y0, w, h));
 
-            // Resize to exactly TemplateSize × TemplateSize if needed
             if (w != TemplateSize || h != TemplateSize)
                 region = new TransformedBitmap(region,
                     new ScaleTransform((double)TemplateSize / w, (double)TemplateSize / h));
@@ -64,9 +60,8 @@ namespace BnsMaterialTracker.Services
             return pixels;
         }
 
-        // ── Pixel extraction ──────────────────────────────────────────
+        // ── Pixel extraction ───────────────────────────────────────────────
 
-        /// <summary>Returns (Bgr32 byte array, stride) for the full screenshot.</summary>
         public static (byte[] pixels, int stride) GetPixels(BitmapSource src)
         {
             var fc = new FormatConvertedBitmap(src, PixelFormats.Bgr32, null, 0);
@@ -76,136 +71,130 @@ namespace BnsMaterialTracker.Services
             return (px, stride);
         }
 
-        // ── Template matching ─────────────────────────────────────────
+        // ── Template matching (MSE) ────────────────────────────────────────
 
         /// <summary>
-        /// Compute mean squared error (per channel) between a TemplateSize×TemplateSize
-        /// region in the screenshot (top-left at sx,sy) and the stored template pixels.
-        /// Lower = more similar. Returns double.MaxValue if out of bounds.
+        /// Compute mean squared error per channel between the stored 40×40 template
+        /// and the 40×40 pixel region at (sx, sy) in the screenshot.
+        /// This is a direct 1-to-1 pixel comparison — no scaling.
         /// </summary>
         private static double RegionMse(
             byte[] ssPixels, int ssStride, int ssW, int ssH,
-            byte[] tmplPixels,
-            int sx, int sy, int cellSize)
+            byte[] tmplPixels, int sx, int sy)
         {
-            double sum   = 0;
-            int    count = 0;
-            double scale = (double)cellSize / TemplateSize;  // pixels per template pixel
+            if (sx < 0 || sy < 0 || sx + TemplateSize > ssW || sy + TemplateSize > ssH)
+                return double.MaxValue;
 
+            double sum = 0;
             for (int ty = 0; ty < TemplateSize; ty++)
             {
-                int py = sy + (int)(ty * scale);
-                if (py < 0 || py >= ssH) return double.MaxValue;
-
+                int si_row = (sy + ty) * ssStride + sx * 4;
+                int ti_row = ty * TemplateSize * 4;
                 for (int tx = 0; tx < TemplateSize; tx++)
                 {
-                    int px = sx + (int)(tx * scale);
-                    if (px < 0 || px >= ssW) return double.MaxValue;
-
-                    int ti = (ty * TemplateSize + tx) * 4;
-                    int si = py * ssStride + px * 4;
-
-                    // B, G, R channels
-                    for (int c = 0; c < 3; c++)
-                    {
-                        double d = tmplPixels[ti + c] - ssPixels[si + c];
-                        sum += d * d;
-                    }
-                    count += 3;
+                    int si = si_row + tx * 4;
+                    int ti = ti_row + tx * 4;
+                    // B, G, R  (skip alpha at [+3])
+                    double db = ssPixels[si]     - tmplPixels[ti];
+                    double dg = ssPixels[si + 1] - tmplPixels[ti + 1];
+                    double dr = ssPixels[si + 2] - tmplPixels[ti + 2];
+                    sum += db * db + dg * dg + dr * dr;
                 }
             }
-            return count > 0 ? sum / count : double.MaxValue;
+            // Divide by number of values (TemplateSize*TemplateSize*3 channels)
+            return sum / (TemplateSize * TemplateSize * 3.0);
         }
 
         private struct SearchHit { public int X, Y; public double Mse; }
 
         /// <summary>
-        /// Search a region of the screenshot for the best match to the template.
-        /// searchRadius = 0 means full screenshot; otherwise ±searchRadius around (cx,cy).
-        /// Returns top-left pixel of best match and its MSE.
+        /// Search for the template in the screenshot.
+        /// Returns the top-left (x,y) of the best-matching 40×40 region and its MSE.
         /// </summary>
         private static SearchHit FindBestMatch(
             byte[] ssPixels, int ssStride, int ssW, int ssH,
             byte[] tmplPixels,
-            int cx, int cy, int cellSize,
+            int cx, int cy,   // original click center from registration
             bool fullScan)
         {
-            int step = fullScan ? 8 : 4;
+            // The template was captured starting at (cx - TSize/2, cy - TSize/2 - 4)
+            int expectedX = cx - TemplateSize / 2;
+            int expectedY = cy - TemplateSize / 2 - 4;
 
+            int coarseStep = fullScan ? 5 : 2;
             int x0, x1, y0, y1;
+
             if (fullScan)
             {
-                x0 = 0;  x1 = ssW - cellSize;
-                y0 = 0;  y1 = ssH - cellSize;
+                x0 = 0;                        x1 = ssW - TemplateSize;
+                y0 = 0;                        y1 = ssH - TemplateSize;
             }
             else
             {
-                int r = 100;
-                x0 = Math.Max(0, cx - cellSize / 2 - r);
-                x1 = Math.Min(ssW - cellSize, cx - cellSize / 2 + r);
-                y0 = Math.Max(0, cy - cellSize / 2 - r);
-                y1 = Math.Min(ssH - cellSize, cy - cellSize / 2 + r);
+                int r = 150;   // ±150px — handles moderate window drift
+                x0 = Math.Max(0,                   expectedX - r);
+                x1 = Math.Min(ssW - TemplateSize,  expectedX + r);
+                y0 = Math.Max(0,                   expectedY - r);
+                y1 = Math.Min(ssH - TemplateSize,  expectedY + r);
             }
 
-            var best = new SearchHit
-            {
-                X = cx - cellSize / 2, Y = cy - cellSize / 2,
-                Mse = double.MaxValue
-            };
+            var best = new SearchHit { X = expectedX, Y = expectedY, Mse = double.MaxValue };
 
-            for (int y = y0; y <= y1; y += step)
-                for (int x = x0; x <= x1; x += step)
+            for (int y = y0; y <= y1; y += coarseStep)
+                for (int x = x0; x <= x1; x += coarseStep)
                 {
-                    double mse = RegionMse(ssPixels, ssStride, ssW, ssH, tmplPixels, x, y, cellSize);
+                    double mse = RegionMse(ssPixels, ssStride, ssW, ssH, tmplPixels, x, y);
                     if (mse < best.Mse) { best.Mse = mse; best.X = x; best.Y = y; }
                 }
 
-            // Refinement pass at step 1 around the best coarse position
-            int rx0 = Math.Max(0, best.X - step * 2);
-            int rx1 = Math.Min(ssW - cellSize, best.X + step * 2);
-            int ry0 = Math.Max(0, best.Y - step * 2);
-            int ry1 = Math.Min(ssH - cellSize, best.Y + step * 2);
+            // Fine pass at step 1 around the best coarse hit
+            int fx0 = Math.Max(0,                  best.X - coarseStep - 1);
+            int fx1 = Math.Min(ssW - TemplateSize,  best.X + coarseStep + 1);
+            int fy0 = Math.Max(0,                  best.Y - coarseStep - 1);
+            int fy1 = Math.Min(ssH - TemplateSize,  best.Y + coarseStep + 1);
 
-            for (int y = ry0; y <= ry1; y++)
-                for (int x = rx0; x <= rx1; x++)
+            for (int y = fy0; y <= fy1; y++)
+                for (int x = fx0; x <= fx1; x++)
                 {
-                    double mse = RegionMse(ssPixels, ssStride, ssW, ssH, tmplPixels, x, y, cellSize);
+                    double mse = RegionMse(ssPixels, ssStride, ssW, ssH, tmplPixels, x, y);
                     if (mse < best.Mse) { best.Mse = mse; best.X = x; best.Y = y; }
                 }
 
             return best;
         }
 
-        // ── OCR ───────────────────────────────────────────────────────
+        // ── OCR ───────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Reads the quantity number from the bottom-left corner of an item cell.
-        /// cellX, cellY = top-left of the cell in the screenshot.
-        /// Returns -1 if OCR fails or number cannot be parsed.
+        /// Read the quantity number from the bottom-left of the matched region.
+        /// matchX, matchY = top-left of the 40×40 matched region in the screenshot.
+        /// The number sits in the lower ~40% of the cell, left ~60%.
+        /// We crop that area, upscale ×5, threshold white pixels, then OCR.
         /// </summary>
         public static async Task<int> ReadQuantityAsync(
-            BitmapSource screenshot, int cellX, int cellY, int cellSize)
+            BitmapSource screenshot, int matchX, int matchY, int cellSize)
         {
-            // Number sits in approximately the bottom 32%, left 58% of cell
-            int nx = Math.Max(0, cellX);
-            int ny = Math.Max(0, cellY + (int)(cellSize * 0.66));
-            int nw = Math.Min((int)(cellSize * 0.60), screenshot.PixelWidth  - nx);
-            int nh = Math.Min((int)(cellSize * 0.34), screenshot.PixelHeight - ny);
+            // Number region relative to the matched top-left:
+            //   - vertically: bottom 42% of cell → but template top is ~4px above cell center
+            //   - use empirical offsets tuned for BnS bag at typical resolutions
+            int nx = Math.Max(0, matchX);
+            int ny = Math.Max(0, matchY + TemplateSize / 2);   // lower half of template
+            int nw = Math.Min(TemplateSize * 3 / 4, screenshot.PixelWidth  - nx);
+            int nh = Math.Min(TemplateSize / 2,     screenshot.PixelHeight - ny);
 
             if (nw < 4 || nh < 4) return -1;
 
             var cropped = new CroppedBitmap(screenshot, new Int32Rect(nx, ny, nw, nh));
 
-            // Scale up ×4 so OCR can read small digits reliably
-            var upscaled = new TransformedBitmap(cropped, new ScaleTransform(4, 4));
+            // Scale up ×5 so digits are large enough for OCR (min ~40px tall recommended)
+            var upscaled = new TransformedBitmap(cropped, new ScaleTransform(5, 5));
 
-            // Threshold: keep bright (white) pixels, zero out everything else
-            var thresholded = ThresholdWhite(upscaled, brightnessMin: 150);
+            // Threshold: keep bright pixels (the white digit outlines)
+            var thresholded = ThresholdWhite(upscaled, brightnessMin: 145);
 
             var softBmp = await ToBitmapAsync(thresholded);
             if (softBmp == null) return -1;
 
-            // Try installed languages; digits read fine with any language
             var engine = OcrEngine.TryCreateFromUserProfileLanguages()
                       ?? TryAnyEngine();
             if (engine == null) return -1;
@@ -213,7 +202,7 @@ namespace BnsMaterialTracker.Services
             var result = await engine.RecognizeAsync(softBmp);
             string text = result.Text.Trim();
 
-            // Strip everything except digits (handles commas, spaces, misread chars)
+            // Extract contiguous digits (handles commas, spaces, misread chars)
             string digits = Regex.Replace(text, @"[^\d]", "");
             return int.TryParse(digits, out int qty) ? qty : -1;
         }
@@ -228,10 +217,6 @@ namespace BnsMaterialTracker.Services
             return null;
         }
 
-        /// <summary>
-        /// Threshold: pixels with luminance > brightnessMin become white, rest black.
-        /// Helps OCR read white text on complex icon backgrounds.
-        /// </summary>
         private static BitmapSource ThresholdWhite(BitmapSource src, int brightnessMin)
         {
             var fc = new FormatConvertedBitmap(src, PixelFormats.Bgr32, null, 0);
@@ -257,14 +242,11 @@ namespace BnsMaterialTracker.Services
         {
             try
             {
-                // Encode to PNG in memory using WPF encoder
                 var enc = new PngBitmapEncoder();
                 enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(src));
                 var ms = new MemoryStream();
                 enc.Save(ms);
                 ms.Position = 0;
-
-                // Decode using WinRT BitmapDecoder
                 var ras = ms.AsRandomAccessStream();
                 var dec = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(ras);
                 return await dec.GetSoftwareBitmapAsync(
@@ -273,12 +255,8 @@ namespace BnsMaterialTracker.Services
             catch { return null; }
         }
 
-        // ── Full scan orchestration ───────────────────────────────────
+        // ── Full scan ──────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Scan the screenshot against all registered templates.
-        /// Returns one ScanResult per template.
-        /// </summary>
         public static async Task<List<ScanResult>> ScanAsync(
             BitmapSource screenshot,
             IEnumerable<BagTemplate> templates,
@@ -297,7 +275,7 @@ namespace BnsMaterialTracker.Services
                 if (tpx.Length == 0) continue;
 
                 var hit = FindBestMatch(px, stride, w, h, tpx,
-                                        tmpl.CenterX, tmpl.CenterY, cellSize, fullScan);
+                                        tmpl.CenterX, tmpl.CenterY, fullScan);
 
                 var r = new ScanResult
                 {
