@@ -198,23 +198,41 @@ namespace BnsMaterialTracker.Services
         public static async Task<int> ReadQuantityAsync(
             BitmapSource screenshot, int matchX, int matchY, int cellSize)
         {
-            // The quantity number is in the bottom-left of the cell.
-            // We try multiple crop offsets to maximise OCR success.
+            // The number is at the bottom-left of the CELL.
+            // Cell centre = (matchX + TemplateSize/2, matchY + TemplateSize/2).
+            // Cell extends cellSize/2 below the centre, but the template only goes
+            // TemplateSize/2 below — so there are (cellSize-TemplateSize)/2 pixels
+            // that lie BELOW the template bottom edge.
+            int extra    = Math.Max(0, (cellSize - TemplateSize) / 2);  // e.g. 8 for cell=56
+            int cellHalf = cellSize / 2;                                  // 28
+
+            // Number occupies roughly the bottom 20% of the cell height (~11-14 px for 56px cell).
+            // We generate several candidate crops, all in screenshot-absolute coordinates.
+            //
+            //   ny  = matchY + TemplateSize/2 + extra - numH - margin
+            //       ≈ matchY + cellHalf - numH - margin
+            //   nh  = numH + 2*margin
+            //   nx  = matchX  (left edge of the cell icon area)
+            //   nw  = ~half cell width (number rarely exceeds that)
+
+            int numH = Math.Max(12, cellSize / 5);   // ~12px for 56px cell
+
+            // Three crop attempts with decreasing y-start (progressively more of the bottom)
             var candidates = new[]
             {
-                // (xOffset, yOffset, width, height) relative to match top-left
-                (0, TemplateSize * 55 / 100, TemplateSize * 65 / 100, TemplateSize * 45 / 100),
-                (0, TemplateSize * 45 / 100, TemplateSize * 70 / 100, TemplateSize * 55 / 100),
-                (0, TemplateSize * 60 / 100, TemplateSize * 60 / 100, TemplateSize * 40 / 100),
+                // (absX, absY, w, h) — all absolute image coordinates
+                (matchX,     matchY + cellHalf + extra - numH,          cellSize * 2 / 3, numH + 4),
+                (matchX,     matchY + cellHalf + extra - numH - 4,      cellSize * 2 / 3, numH + 8),
+                (matchX,     matchY + TemplateSize * 2 / 3,             cellSize * 2 / 3, extra + numH + 4),
             };
 
-            foreach (var (ox, oy, ow, oh) in candidates)
+            foreach (var (ax, ay, aw, ah) in candidates)
             {
-                int nx = Math.Max(0, matchX + ox);
-                int ny = Math.Max(0, matchY + oy);
-                int nw = Math.Min(ow, screenshot.PixelWidth  - nx);
-                int nh = Math.Min(oh, screenshot.PixelHeight - ny);
-                if (nw < 3 || nh < 3) continue;
+                int nx = Math.Max(0, ax);
+                int ny = Math.Max(0, ay);
+                int nw = Math.Min(aw, screenshot.PixelWidth  - nx);
+                int nh = Math.Min(ah, screenshot.PixelHeight - ny);
+                if (nw < 4 || nh < 4) continue;
 
                 int qty = await TryOcrCrop(screenshot, nx, ny, nw, nh);
                 if (qty >= 0) return qty;
