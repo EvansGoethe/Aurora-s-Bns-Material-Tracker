@@ -265,9 +265,13 @@ namespace BnsMaterialTracker.Services
                       ?? TryAnyEngine();
             if (engine == null) return -1;
 
-            // Attempt 1: raw color image (no thresholding) — WinRT OCR handles colors fine
+            // BnS bag numbers are WHITE on DARK BLUE — OCR needs dark-text-on-light.
+            // Strategy: invert first so white→black, dark→light; then OCR.
+
+            // Attempt 1: invert color image (primary path for BnS)
             {
-                var soft = await ToBitmapAsync(upscaled);
+                var inv  = InvertImage(upscaled);
+                var soft = await ToBitmapAsync(inv);
                 if (soft != null)
                 {
                     var result = await engine.RecognizeAsync(soft);
@@ -276,28 +280,28 @@ namespace BnsMaterialTracker.Services
                 }
             }
 
-            // Attempts 2-5: "true white" threshold (min of all 3 channels >= t)
-            // BnS numbers are white (R≥t & G≥t & B≥t); avoids orange/yellow backgrounds
-            int[] trueWhiteThresholds = { 200, 180, 160, 140 };
-            foreach (int t in trueWhiteThresholds)
+            // Attempt 2: "true white" threshold then invert
+            // Isolates only the pure-white number pixels, then flips to black-on-white
+            foreach (int t in new[] { 200, 180, 160, 140 })
             {
-                var thresh = ThresholdTrueWhite(upscaled, t);
-                var soft   = await ToBitmapAsync(thresh);
+                var thresh = ThresholdTrueWhite(upscaled, t);   // white number, black bg
+                var inv    = InvertImage(thresh);                // black number, white bg
+                var soft   = await ToBitmapAsync(inv);
                 if (soft == null) continue;
                 var result = await engine.RecognizeAsync(soft);
                 string digits = Regex.Replace(result.Text, @"[^\d]", "");
                 if (int.TryParse(digits, out int qty) && qty >= 0) return qty;
             }
 
-            // Attempt 6: luminance fallback (for edge cases)
-            foreach (int t in new[] { 170, 140 })
+            // Attempt 3: raw color (fallback, in case background is light)
             {
-                var thresh = ThresholdLuminance(upscaled, t);
-                var soft   = await ToBitmapAsync(thresh);
-                if (soft == null) continue;
-                var result = await engine.RecognizeAsync(soft);
-                string digits = Regex.Replace(result.Text, @"[^\d]", "");
-                if (int.TryParse(digits, out int qty) && qty >= 0) return qty;
+                var soft = await ToBitmapAsync(upscaled);
+                if (soft != null)
+                {
+                    var result = await engine.RecognizeAsync(soft);
+                    string digits = Regex.Replace(result.Text, @"[^\d]", "");
+                    if (int.TryParse(digits, out int qty) && qty >= 0) return qty;
+                }
             }
 
             return -1;
@@ -328,6 +332,25 @@ namespace BnsMaterialTracker.Services
                 // B=px[i], G=px[i+1], R=px[i+2]
                 byte v = (px[i] >= t && px[i+1] >= t && px[i+2] >= t) ? (byte)255 : (byte)0;
                 px[i] = px[i+1] = px[i+2] = v;
+                px[i+3] = 255;
+            }
+            var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgr32, null);
+            wb.WritePixels(new Int32Rect(0, 0, w, h), px, stride, 0);
+            return wb;
+        }
+
+        /// <summary>Invert all pixel values: white→black, dark→light.</summary>
+        private static BitmapSource InvertImage(BitmapSource src)
+        {
+            var fc = new FormatConvertedBitmap(src, PixelFormats.Bgr32, null, 0);
+            int w = fc.PixelWidth, h = fc.PixelHeight, stride = w * 4;
+            var px = new byte[stride * h];
+            fc.CopyPixels(px, stride, 0);
+            for (int i = 0; i < px.Length; i += 4)
+            {
+                px[i]   = (byte)(255 - px[i]);
+                px[i+1] = (byte)(255 - px[i+1]);
+                px[i+2] = (byte)(255 - px[i+2]);
                 px[i+3] = 255;
             }
             var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgr32, null);
