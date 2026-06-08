@@ -8,11 +8,18 @@ $ExeFile = "$ExeName.exe"                     # full filename with extension
 $Repo    = "EvansGoethe/Aurora-s-Bns-Material-Tracker"
 $gh      = "C:\Program Files\GitHub CLI\gh.exe"
 
-# Read version from csproj (single source of truth)
+# Version = major.minor from csproj + auto patch (git commit count)
 [xml]$csproj = Get-Content "$Root\BnsMaterialTracker.csproj"
-$Version = ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } |
-            Where-Object { $_ } | Select-Object -First 1)
-if (-not $Version) { $Version = "1.0.0" }
+$BaseVersion = ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } |
+                Where-Object { $_ } | Select-Object -First 1)
+if (-not $BaseVersion) { $BaseVersion = "1.0" }
+# Keep only major.minor (strip any extra components)
+$parts = ($BaseVersion -split '\.')
+$BaseVersion = "$($parts[0]).$($parts[1])"
+# Patch number = total git commits (auto-increments, never manual)
+$Patch = (git -C $Root rev-list --count HEAD 2>$null)
+if (-not $Patch) { $Patch = "0" }
+$Version = "$BaseVersion.$Patch"
 $Tag = "v$Version"
 Write-Host "Version: $Version  ($Tag)" -ForegroundColor DarkCyan
 
@@ -26,6 +33,7 @@ Write-Host "[2/4] Publishing..." -ForegroundColor Cyan
 dotnet publish "$Root\BnsMaterialTracker.csproj" `
     -c Release -r win-x64 --no-self-contained `
     -p:PublishSingleFile=true `
+    -p:Version=$Version `
     -o "$Root\publish"
 
 if ($LASTEXITCODE -ne 0) { Write-Host "Publish failed." -ForegroundColor Red; exit 1 }

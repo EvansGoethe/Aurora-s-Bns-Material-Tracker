@@ -210,7 +210,7 @@ namespace BnsMaterialTracker.Services
         private static readonly Dictionary<string, string> ZhCN = new()
         {
             ["app.windowTitle"]  = "洛洛剑灵材料追踪器",
-            ["nav.gameTitle"]    = "剑灵",
+            ["nav.gameTitle"]    = "洛洛剑灵",
             ["nav.appTitle"]     = "材料追踪器",
             ["nav.server"]       = "台服",
             ["nav.main"]         = "主要功能",
