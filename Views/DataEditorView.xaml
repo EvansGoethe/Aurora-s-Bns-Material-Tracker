@@ -241,7 +241,7 @@
               <!-- Column headers -->
               <Grid Margin="16,12,16,8">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="56"/>
+                  <ColumnDefinition Width="64"/>
                   <ColumnDefinition Width="8"/>
                   <ColumnDefinition Width="150"/>
                   <ColumnDefinition Width="8"/>
@@ -263,7 +263,7 @@
                   <DataTemplate>
                     <Grid Margin="16,0,16,6">
                       <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="56"/>
+                        <ColumnDefinition Width="64"/>
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="150"/>
                         <ColumnDefinition Width="8"/>
@@ -273,9 +273,24 @@
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="32"/>
                       </Grid.ColumnDefinitions>
-                      <TextBox Grid.Column="0"
-                               Text="{Binding Icon, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                               TextAlignment="Center" FontSize="16"/>
+                      <ComboBox Grid.Column="0" Height="36" FontSize="18"
+                                ItemsSource="{Binding IconChoices,
+                                  RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                SelectedItem="{Binding Icon, Mode=TwoWay}">
+                        <ComboBox.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel Width="216" Orientation="Horizontal"/>
+                          </ItemsPanelTemplate>
+                        </ComboBox.ItemsPanel>
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate>
+                            <TextBlock Text="{Binding}" FontSize="18"
+                                       Width="30" Height="30"
+                                       TextAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
                       <TextBox Grid.Column="2"
                                Text="{Binding Id, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                       <TextBox Grid.Column="4"

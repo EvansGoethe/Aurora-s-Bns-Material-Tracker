@@ -30,6 +30,17 @@ namespace BnsMaterialTracker.Views
             public override string ToString() => Label;
         }
 
+        // ── Emoji icon picker choices ───────────────────────────────────────
+        private static readonly string[] _iconChoices =
+        {
+            "📦","💎","💠","🔮","🌟","⭐","✨","💫",
+            "🔴","🟠","🟡","🟢","🔵","🟣","🔶","🔷",
+            "🔥","❄️","⚡","🌀","💧","🌸","🍃","🌿",
+            "⚔️","🛡️","🪄","💰","🪙","🎫","🔑",
+            "🧪","💍","📿","🏺","🎯",
+        };
+        public string[] IconChoices => _iconChoices;
+
         // ── Option arrays (rebuilt on each Refresh so they follow language) ─
         private CatOption[] _dungeonTypeOptions     = Array.Empty<CatOption>();
         private CatOption[] _categoryOptions        = Array.Empty<CatOption>();
