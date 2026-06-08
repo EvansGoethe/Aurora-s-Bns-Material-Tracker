@@ -216,17 +216,23 @@ namespace BnsMaterialTracker.Services
             int cellLeftX   = matchX + TemplateSize / 2 - cellSize / 2; // matchX-8
 
             // BnS quantity numbers occupy roughly the bottom 35-40% of the cell.
-            // For cell=56: 56*40/100 = 22px.  Add generous padding so digits aren't cut.
-            int numH = Math.Max(24, cellSize * 40 / 100);  // ≥24 px; ~22 px for cell=56 → use 24
-            int numW = Math.Max(48, cellSize * 75 / 100);  // wide enough for 4-digit numbers
+            // Extend crop left by an extra 12 px so a leading digit (e.g. "6" in "625")
+            // is never clipped right at the crop edge, even when the number aligns close
+            // to the cell boundary.
+            const int leftPad = 12;
+            int numH = Math.Max(24, cellSize * 40 / 100);  // ≥24 px tall
+            int numW = Math.Max(72, cellSize + leftPad + 8); // wide enough for 4-digit numbers + padding
+
+            // Apply the left-padding: start the crop leftPad pixels before the cell edge
+            int cropleftX = cellLeftX - leftPad;
 
             // Three crop attempts: anchored at the actual cell bottom, increasing height
             var candidates = new[]
             {
                 // (absX, absY, w, h) — all absolute image coordinates
-                (cellLeftX, cellBottomY - numH,      numW, numH + 4),   // primary
-                (cellLeftX, cellBottomY - numH - 6,  numW, numH + 10),  // start higher
-                (cellLeftX, cellCenterY,             numW, cellSize / 2 + 4), // whole lower half
+                (cropleftX, cellBottomY - numH,      numW, numH + 4),   // primary
+                (cropleftX, cellBottomY - numH - 6,  numW, numH + 10),  // start higher
+                (cropleftX, cellCenterY,             numW, cellSize / 2 + 4), // whole lower half
             };
 
             foreach (var (ax, ay, aw, ah) in candidates)
@@ -243,27 +249,12 @@ namespace BnsMaterialTracker.Services
             return -1;
         }
 
-        private static int _debugCropIndex = 0;
-
         private static async Task<int> TryOcrCrop(
             BitmapSource src, int nx, int ny, int nw, int nh)
         {
             var cropped  = new CroppedBitmap(src, new Int32Rect(nx, ny, nw, nh));
             // ×8 upscale — bigger = easier for OCR to read small digits
             var upscaled = new TransformedBitmap(cropped, new ScaleTransform(8, 8));
-
-            // Save debug crops to Desktop so we can inspect what OCR sees
-            try
-            {
-                string path = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    $"bns_ocr_debug_{++_debugCropIndex:D2}.png");
-                var enc = new PngBitmapEncoder();
-                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(upscaled));
-                using var fs = System.IO.File.Create(path);
-                enc.Save(fs);
-            }
-            catch { /* best-effort */ }
 
             var engine = OcrEngine.TryCreateFromUserProfileLanguages()
                       ?? TryAnyEngine();
