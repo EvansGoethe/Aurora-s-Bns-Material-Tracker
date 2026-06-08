@@ -21,6 +21,8 @@ A desktop tool for **Blade & Soul TW Server** to track dungeon runs, manage mate
 | **Market Analysis** | Gold-per-minute efficiency ranking based on market prices |
 | **資料編輯器** | 表單式介面直接編輯副本、材料、升級路線，無需手動改 JSON |
 | **Data Editor** | Form-based editor for dungeons, materials, and upgrade paths — no JSON editing needed |
+| **截圖辨識** | 匯入背包截圖，自動比對圖示並讀取數量，一鍵套用至倉庫 |
+| **Bag Scanner** | Import a bag screenshot, auto-match item icons and read quantities via OCR, then apply to inventory in one click |
 | **多語言** | 繁體中文 / 簡體中文 / English 即時切換 |
 | **i18n** | Traditional Chinese / Simplified Chinese / English |
 
@@ -82,6 +84,34 @@ The uninstaller does not remove this file — your data is preserved across rein
 
 ---
 
+## Bag Scanner 截圖辨識
+
+自動從背包截圖讀取材料數量並同步至倉庫，免去手動輸入。
+
+1. 切換至「截圖辨識」頁籤，點擊「📂 匯入截圖」載入背包截圖
+2. 在截圖上點擊要追蹤的材料格子，從彈出選單指定對應材料，完成模板登記
+3. 重複步驟 2 直到所有材料都登記完畢（模板只需登記一次，之後會自動沿用）
+4. 點擊「🔍 掃描截圖」，程式會自動比對圖示位置並 OCR 讀取數量
+5. 確認結果無誤後，點擊「✅ 套用至倉庫」將數量寫入倉庫
+
+> **格子大小**：預設 64px，可依遊戲解析度調整（側欄的「＋／－」按鈕）。  
+> **全圖搜尋**：若遊戲視窗有移動，勾選「全圖搜尋」讓程式在整張截圖中尋找圖示。
+
+---
+
+Automatically read material quantities from a bag screenshot and sync them to your inventory — no manual entry needed.
+
+1. Go to the **Bag Scanner** tab and click **📂 Import Screenshot** to load a bag screenshot
+2. Click on an item cell in the screenshot; assign the matching material from the popup to register a template
+3. Repeat step 2 for each material you want to track (templates are saved and reused automatically)
+4. Click **🔍 Scan Screenshot** — the app matches icon positions and reads quantities via OCR
+5. Review the results, then click **✅ Apply to Inventory** to write the quantities
+
+> **Cell size**: defaults to 64 px; adjust with the **＋/－** buttons to match your game resolution.  
+> **Full scan**: if the game window has moved since the template was registered, enable **Full Scan** to search the entire screenshot.
+
+---
+
 ## Build from Source 從原始碼建置
 
 ```bash
@@ -105,6 +135,7 @@ ISCC installer.iss
 - C# / WPF (.NET 6.0)
 - MVVM pattern
 - System.Text.Json
+- Windows.Media.Ocr (bag scanner OCR)
 - [Inno Setup 6](https://jrsoftware.org/isdl.php) (installer)
 
 ---
