@@ -206,24 +206,23 @@ namespace BnsMaterialTracker.Services
             int extra    = Math.Max(0, (cellSize - TemplateSize) / 2);  // e.g. 8 for cell=56
             int cellHalf = cellSize / 2;                                  // 28
 
-            // Number occupies roughly the bottom 20% of the cell height (~11-14 px for 56px cell).
-            // We generate several candidate crops, all in screenshot-absolute coordinates.
-            //
-            //   ny  = matchY + TemplateSize/2 + extra - numH - margin
-            //       ≈ matchY + cellHalf - numH - margin
-            //   nh  = numH + 2*margin
-            //   nx  = matchX  (left edge of the cell icon area)
-            //   nw  = ~half cell width (number rarely exceeds that)
+            // Cell centre is at (matchX + TemplateSize/2, matchY + TemplateSize/2).
+            // Cell bottom  = cell-centre-Y + cellSize/2
+            //              = matchY + TemplateSize/2 + cellSize/2
+            // For cell=56 : matchY + 20 + 28 = matchY + 48
+            // The quantity number sits in the bottom ~20% of the cell.
+            int cellCenterY = matchY + TemplateSize / 2;          // matchY+20
+            int cellBottomY = cellCenterY + cellSize / 2;         // matchY+48
+            int cellLeftX   = matchX + TemplateSize / 2 - cellSize / 2; // matchX-8
+            int numH        = Math.Max(14, cellSize * 22 / 100);  // ~12 px for cell=56
 
-            int numH = Math.Max(12, cellSize / 5);   // ~12px for 56px cell
-
-            // Three crop attempts with decreasing y-start (progressively more of the bottom)
+            // Three crop attempts: all anchored at the actual cell bottom
             var candidates = new[]
             {
                 // (absX, absY, w, h) — all absolute image coordinates
-                (matchX,     matchY + cellHalf + extra - numH,          cellSize * 2 / 3, numH + 4),
-                (matchX,     matchY + cellHalf + extra - numH - 4,      cellSize * 2 / 3, numH + 8),
-                (matchX,     matchY + TemplateSize * 2 / 3,             cellSize * 2 / 3, extra + numH + 4),
+                (cellLeftX, cellBottomY - numH,     cellSize * 3 / 5, numH + 2),
+                (cellLeftX, cellBottomY - numH - 4, cellSize * 2 / 3, numH + 6),
+                (cellLeftX, cellCenterY + 4,        cellSize * 2 / 3, cellBottomY - cellCenterY - 2),
             };
 
             foreach (var (ax, ay, aw, ah) in candidates)
