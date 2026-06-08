@@ -19,6 +19,7 @@ namespace BnsMaterialTracker
         private MarketView       _market      = null!;
         private DataEditorView   _dataEditor  = null!;
         private SettingsView     _settings    = null!;
+        private BagScanView      _bagScan     = null!;
 
         public MainWindow()
         {
@@ -51,6 +52,7 @@ namespace BnsMaterialTracker
             _market      = new MarketView      { DataContext = _vm };
             _dataEditor  = new DataEditorView  { DataContext = _vm };
             _settings    = new SettingsView    { DataContext = _vm };
+            _bagScan     = new BagScanView     { DataContext = _vm };
 
             ShowPage("dashboard");
         }
@@ -72,6 +74,7 @@ namespace BnsMaterialTracker
             SetNavText(NavPredictor,  "🎯 " + L10n.T("nav.predictor"));
             SetNavInventory(          "📦 " + L10n.T("nav.inventory"));
             SetNavText(NavMarket,     "💰 " + L10n.T("nav.market"));
+            SetNavText(NavBagScan,    "🔍 " + L10n.T("nav.bagscan"));
             SetNavText(NavDataEditor, "✏️ " + L10n.T("nav.dataeditor"));
             SetNavText(NavSettings,   "⚙️ " + L10n.T("nav.settings"));
         }
@@ -129,6 +132,10 @@ namespace BnsMaterialTracker
                 case "settings":
                     _settings?.Refresh();
                     MainContent.Content = _settings;
+                    break;
+                case "bagscan":
+                    _bagScan?.Refresh();
+                    MainContent.Content = _bagScan;
                     break;
             }
         }

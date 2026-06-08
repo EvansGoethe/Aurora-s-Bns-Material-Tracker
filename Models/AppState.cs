@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Windows.Media.Imaging;
 
 namespace BnsMaterialTracker.Models
 {
@@ -40,6 +41,59 @@ namespace BnsMaterialTracker.Models
         [JsonPropertyName("weeklyResetHour")]       public int WeeklyResetHour { get; set; } = 6;
         [JsonPropertyName("reminderMinutesBefore")] public int ReminderMinutesBefore { get; set; } = 10;
         [JsonPropertyName("marketPrices")]          public Dictionary<string, double> MarketPrices { get; set; } = new();
+        [JsonPropertyName("bagTemplates")]          public List<BagTemplate> BagTemplates { get; set; } = new();
+        [JsonPropertyName("bagCellSize")]           public int BagCellSize { get; set; } = 64;
+    }
+
+    /// <summary>
+    /// Stores one registered template for bag scanning.
+    /// The template is a 40×40 Bgr32 pixel snapshot of an item icon, used for template matching.
+    /// CenterX/CenterY record where in the screenshot this item was clicked (image coordinates).
+    /// </summary>
+    public class BagTemplate
+    {
+        [JsonPropertyName("materialId")]     public string MaterialId     { get; set; } = "";
+        [JsonPropertyName("templateBase64")] public string TemplateBase64 { get; set; } = "";
+        [JsonPropertyName("centerX")]        public int    CenterX        { get; set; }
+        [JsonPropertyName("centerY")]        public int    CenterY        { get; set; }
+
+        [JsonIgnore] private byte[]? _cache;
+
+        /// <summary>Raw 40×40 Bgr32 bytes (6 400 bytes). Lazily decoded from TemplateBase64.</summary>
+        [JsonIgnore]
+        public byte[] PixelData
+        {
+            get
+            {
+                if (_cache is null && !string.IsNullOrEmpty(TemplateBase64))
+                {
+                    try   { _cache = Convert.FromBase64String(TemplateBase64); }
+                    catch { _cache = Array.Empty<byte>(); }
+                }
+                return _cache ?? Array.Empty<byte>();
+            }
+        }
+
+        public void StorePixels(byte[] pixels)
+        {
+            _cache         = pixels;
+            TemplateBase64 = Convert.ToBase64String(pixels);
+        }
+
+        /// <summary>Create a displayable BitmapSource preview from the stored pixels.</summary>
+        [JsonIgnore]
+        public BitmapSource? Preview
+        {
+            get
+            {
+                var px = PixelData;
+                if (px.Length < 40 * 40 * 4) return null;
+                var wb = new WriteableBitmap(40, 40, 96, 96,
+                    System.Windows.Media.PixelFormats.Bgr32, null);
+                wb.WritePixels(new System.Windows.Int32Rect(0, 0, 40, 40), px, 40 * 4, 0);
+                return wb;
+            }
+        }
     }
 
     public class SaveData

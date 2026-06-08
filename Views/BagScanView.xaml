@@ -1,0 +1,217 @@
+<UserControl x:Class="BnsMaterialTracker.Views.BagScanView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Grid Background="{StaticResource BgApp}">
+
+    <!-- ══ Material-picker overlay (shown when user clicks a cell) ══ -->
+    <Grid x:Name="PickerOverlay" Visibility="Collapsed"
+          Background="#BB000000" Panel.ZIndex="20">
+      <Border Background="{StaticResource BgCard}"
+              BorderBrush="{StaticResource Border}"
+              BorderThickness="1" CornerRadius="8"
+              Padding="20" Width="340"
+              VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel>
+          <TextBlock x:Name="TxtPickTitle" Text="選擇此格的材料"
+                     FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+          <!-- Small preview of the clicked cell -->
+          <Image x:Name="ImgPickPreview" Width="80" Height="80"
+                 Stretch="Uniform" HorizontalAlignment="Left" Margin="0,0,0,12"
+                 RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+
+          <!-- Material list -->
+          <ListBox x:Name="PickerList" Height="200"
+                   Background="{StaticResource BgApp}"
+                   BorderBrush="{StaticResource Border}"
+                   BorderThickness="1">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal" Margin="4,2">
+                  <TextBlock Text="{Binding Icon}" FontSize="16" Width="24" VerticalAlignment="Center"/>
+                  <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <!-- Buttons -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="BtnPickCancel" Content="取消" Width="72" Margin="0,0,8,0"
+                    Style="{StaticResource BtnSecondary}" Click="BtnPickCancel_Click"/>
+            <Button x:Name="BtnPickConfirm" Content="確定" Width="72"
+                    Style="{StaticResource BtnPrimary}" Click="BtnPickConfirm_Click"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!-- ══ Main layout ══════════════════════════════════════════════ -->
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="290"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- ── Left: screenshot viewer ───────────────────────────── -->
+      <Border Grid.Column="0" Background="#0D0D1A" Margin="0">
+        <Grid>
+          <!-- Placeholder when no screenshot is loaded -->
+          <TextBlock x:Name="TxtNoScreenshot"
+                     Text="尚未匯入截圖&#10;點擊右側「匯入截圖」開始"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     TextAlignment="Center" FontSize="16"
+                     Foreground="{StaticResource TextMuted}"
+                     Visibility="Visible"/>
+
+          <!-- Screenshot + overlay canvas -->
+          <Image x:Name="ImgScreenshot" Stretch="Uniform"
+                 Cursor="Cross"
+                 MouseLeftButtonDown="ImgScreenshot_Click"
+                 SizeChanged="ImgScreenshot_SizeChanged"
+                 Visibility="Collapsed"/>
+          <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False"
+                  Visibility="Collapsed"/>
+        </Grid>
+      </Border>
+
+      <!-- ── Right: controls panel ──────────────────────────────── -->
+      <Border Grid.Column="1" Background="{StaticResource BgSidebar}"
+              BorderBrush="{StaticResource Border}" BorderThickness="1,0,0,0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+          <StackPanel Margin="14,16,14,16">
+
+            <!-- Title -->
+            <TextBlock x:Name="TxtTitle" Text="截圖辨識"
+                       FontSize="18" FontWeight="Bold" Margin="0,0,0,14"/>
+
+            <!-- Import button -->
+            <Button x:Name="BtnImport" Content="📂 匯入截圖"
+                    Style="{StaticResource BtnPrimary}"
+                    Height="38" Margin="0,0,0,10"
+                    Click="BtnImport_Click"/>
+
+            <!-- Hint text -->
+            <TextBlock x:Name="TxtClickHint"
+                       Text="點擊截圖中的材料格子來登記模板"
+                       FontSize="11" Foreground="{StaticResource TextMuted}"
+                       TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+            <!-- Cell size config -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+              <TextBlock x:Name="TxtCellSizeLabel" Text="格子大小 (px)"
+                         VerticalAlignment="Center" Margin="0,0,8,0"
+                         Foreground="{StaticResource TextSecondary}" FontSize="13"/>
+              <TextBox x:Name="TxtCellSize" Text="64" Width="54" Height="30"
+                       TextAlignment="Center"
+                       TextChanged="TxtCellSize_Changed"/>
+            </StackPanel>
+
+            <Separator Margin="0,0,0,10"/>
+
+            <!-- Registered templates label -->
+            <TextBlock x:Name="TxtTemplatesLabel" Text="已登記模板"
+                       FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+            <!-- Templates list -->
+            <ItemsControl x:Name="TemplateList" Margin="0,0,0,4">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="44"/>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="28"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Preview thumbnail -->
+                    <Image Grid.Column="0" Source="{Binding Preview}"
+                           Width="40" Height="40" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    <!-- Material name -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                      <TextBlock Text="{Binding MatDisplay}" FontSize="13"
+                                 TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <!-- Delete button -->
+                    <Button Grid.Column="2" Content="✕" Width="24" Height="24"
+                            FontSize="11"
+                            Tag="{Binding MaterialId}"
+                            Style="{StaticResource BtnGhost}"
+                            Foreground="{StaticResource TextMuted}"
+                            Click="BtnDeleteTemplate_Click"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Empty state for templates -->
+            <TextBlock x:Name="TxtNoTemplates" Text="尚未登記任何材料"
+                       FontSize="12" Foreground="{StaticResource TextMuted}"
+                       Margin="0,4,0,0" Visibility="Visible"/>
+
+            <Separator Margin="0,10,0,10"/>
+
+            <!-- Full scan checkbox -->
+            <CheckBox x:Name="ChkFullScan"
+                      Content="全圖搜尋（視窗移動後使用）"
+                      FontSize="12" Margin="0,0,0,8"
+                      Foreground="{StaticResource TextSecondary}"/>
+
+            <!-- Scan button -->
+            <Button x:Name="BtnScan" Content="🔍 掃描截圖"
+                    Style="{StaticResource BtnPrimary}"
+                    Height="38" IsEnabled="False"
+                    Click="BtnScan_Click"/>
+
+            <!-- Status text -->
+            <TextBlock x:Name="TxtScanStatus" Text=""
+                       FontSize="12" Foreground="{StaticResource TextMuted}"
+                       Margin="0,6,0,0" TextWrapping="Wrap"/>
+
+            <Separator x:Name="SepResults" Margin="0,10,0,10"
+                       Visibility="Collapsed"/>
+
+            <!-- Results label -->
+            <TextBlock x:Name="TxtResultsLabel" Text="偵測結果"
+                       FontSize="13" FontWeight="SemiBold"
+                       Margin="0,0,0,8" Visibility="Collapsed"/>
+
+            <!-- Results list -->
+            <ItemsControl x:Name="ResultList" Margin="0,0,0,8">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="24"/>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding MatIcon}" FontSize="16"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding MatName}"
+                               VerticalAlignment="Center" Margin="4,0,0,0"
+                               FontSize="13" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Column="2" Text="{Binding QuantityDisplay}"
+                               VerticalAlignment="Center" Margin="6,0,0,0"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{Binding QuantityColor}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Apply button -->
+            <Button x:Name="BtnApply" Content="✅ 套用至倉庫"
+                    Style="{StaticResource BtnPrimary}"
+                    Height="38" IsEnabled="False"
+                    Visibility="Collapsed"
+                    Click="BtnApply_Click"/>
+
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+  </Grid>
+</UserControl>

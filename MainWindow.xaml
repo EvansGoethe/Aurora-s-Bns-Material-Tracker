@@ -69,6 +69,10 @@
                          Checked="Nav_Checked" Tag="inventory">
               <TextBlock Text="📦 倉庫"/>
             </RadioButton>
+            <RadioButton x:Name="NavBagScan"     Style="{StaticResource NavBtn}"
+                         Checked="Nav_Checked" Tag="bagscan">
+              <TextBlock Text="🔍 截圖辨識"/>
+            </RadioButton>
             <RadioButton x:Name="NavMarket"      Style="{StaticResource NavBtn}"
                          Checked="Nav_Checked" Tag="market">
               <TextBlock Text="💰 效益分析"/>
