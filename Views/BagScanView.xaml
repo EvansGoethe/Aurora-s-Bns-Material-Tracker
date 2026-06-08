@@ -99,14 +99,25 @@
                        TextWrapping="Wrap" Margin="0,0,0,14"/>
 
             <!-- Cell size config -->
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-              <TextBlock x:Name="TxtCellSizeLabel" Text="格子大小 (px)"
-                         VerticalAlignment="Center" Margin="0,0,8,0"
-                         Foreground="{StaticResource TextSecondary}" FontSize="13"/>
-              <TextBox x:Name="TxtCellSize" Text="64" Width="54" Height="30"
-                       TextAlignment="Center"
+            <TextBlock x:Name="TxtCellSizeLabel" Text="格子大小 (px)"
+                       Foreground="{StaticResource TextSecondary}" FontSize="12"
+                       Margin="0,0,0,4"/>
+            <Grid Margin="0,0,0,14">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBox x:Name="TxtCellSize" Grid.Column="0" Text="64" Height="34"
+                       TextAlignment="Center" FontSize="15"
                        TextChanged="TxtCellSize_Changed"/>
-            </StackPanel>
+              <Button Grid.Column="1" Content="－" Width="34" Height="34" Margin="4,0,0,0"
+                      FontSize="16" Style="{StaticResource BtnGhost}"
+                      Click="BtnCellSizeDec_Click"/>
+              <Button Grid.Column="2" Content="＋" Width="34" Height="34" Margin="4,0,0,0"
+                      FontSize="16" Style="{StaticResource BtnPrimary}"
+                      Click="BtnCellSizeInc_Click"/>
+            </Grid>
 
             <Separator Margin="0,0,0,10"/>
 

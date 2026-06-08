@@ -62,6 +62,9 @@ namespace BnsMaterialTracker.Views
             if (DataContext is not AppViewModel vm) return;
             _vm = vm;
             ApplyL10n();
+            // Restore saved cell size
+            _cellSize = vm.Settings.BagCellSize > 0 ? vm.Settings.BagCellSize : 64;
+            TxtCellSize.Text = _cellSize.ToString();
             RebuildTemplateList();
             UpdateScanButton();
         }
@@ -234,6 +237,18 @@ namespace BnsMaterialTracker.Views
                 _vm?.Settings.Let(s => { s.BagCellSize = _cellSize; });
                 _vm?.UpdateSettings();
             }
+        }
+
+        private void BtnCellSizeDec_Click(object sender, RoutedEventArgs e)
+        {
+            int sz = Math.Max(16, _cellSize - 4);
+            TxtCellSize.Text = sz.ToString();
+        }
+
+        private void BtnCellSizeInc_Click(object sender, RoutedEventArgs e)
+        {
+            int sz = Math.Min(256, _cellSize + 4);
+            TxtCellSize.Text = sz.ToString();
         }
 
         // ── Scan ───────────────────────────────────────────────────────
