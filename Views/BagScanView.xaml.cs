@@ -358,10 +358,11 @@ namespace BnsMaterialTracker.Views
                 Canvas.SetTop(rect,  dy);
                 OverlayCanvas.Children.Add(rect);
 
-                // Material name label
+                // Material name label (shows image-space coords for debugging)
                 var label = new TextBlock
                 {
-                    Text       = _vm.GetMatIcon(tmpl.MaterialId) + " " + _vm.GetMatName(tmpl.MaterialId),
+                    Text       = _vm.GetMatIcon(tmpl.MaterialId) + " " + _vm.GetMatName(tmpl.MaterialId)
+                               + $" [{tmpl.CenterX},{tmpl.CenterY}]",
                     FontSize   = 10,
                     Foreground = Brushes.LimeGreen,
                     Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
@@ -369,6 +370,17 @@ namespace BnsMaterialTracker.Views
                 Canvas.SetLeft(label, dx);
                 Canvas.SetTop(label,  dy + dh);
                 OverlayCanvas.Children.Add(label);
+
+                // Red dot at exact center point — should appear where user clicked
+                var (cx, cy, _, _) = ImageToDisplay(ImgScreenshot, _screenshot,
+                                                     tmpl.CenterX, tmpl.CenterY, 1, 1);
+                var dot = new System.Windows.Shapes.Ellipse
+                {
+                    Width = 8, Height = 8, Fill = Brushes.Red,
+                };
+                Canvas.SetLeft(dot, cx - 4);
+                Canvas.SetTop(dot,  cy - 4);
+                OverlayCanvas.Children.Add(dot);
             }
         }
 

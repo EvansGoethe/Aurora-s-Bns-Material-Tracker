@@ -239,12 +239,27 @@ namespace BnsMaterialTracker.Services
             return -1;
         }
 
+        private static int _debugCropIndex = 0;
+
         private static async Task<int> TryOcrCrop(
             BitmapSource src, int nx, int ny, int nw, int nh)
         {
             var cropped  = new CroppedBitmap(src, new Int32Rect(nx, ny, nw, nh));
             // ×8 upscale — bigger = easier for OCR to read small digits
             var upscaled = new TransformedBitmap(cropped, new ScaleTransform(8, 8));
+
+            // Save debug crops to Desktop so we can inspect what OCR sees
+            try
+            {
+                string path = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                    $"bns_ocr_debug_{++_debugCropIndex:D2}.png");
+                var enc = new PngBitmapEncoder();
+                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(upscaled));
+                using var fs = System.IO.File.Create(path);
+                enc.Save(fs);
+            }
+            catch { /* best-effort */ }
 
             var engine = OcrEngine.TryCreateFromUserProfileLanguages()
                       ?? TryAnyEngine();
