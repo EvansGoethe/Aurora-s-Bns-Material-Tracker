@@ -20,7 +20,7 @@
                      VerticalAlignment="Center" Margin="0,0,12,0"/>
           <TextBlock x:Name="TxtGoldLabel" Grid.Column="1" Text="金幣"
                      FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBox x:Name="TxtGold" Grid.Column="2" Height="36"
+          <TextBox x:Name="TxtGold" Grid.Column="2" Height="42"
                    TextChanged="TxtGold_Changed"/>
         </Grid>
       </Border>
@@ -36,7 +36,7 @@
                 <ItemsControl ItemsSource="{Binding Items}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Grid Margin="0,4">
+                      <Grid Margin="0,6">
                         <Grid.ColumnDefinitions>
                           <ColumnDefinition Width="30"/>
                           <ColumnDefinition Width="*"/>
@@ -46,7 +46,7 @@
                                    FontSize="18" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1" Text="{Binding Name}"
                                    VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="2" Height="32"
+                        <TextBox Grid.Column="2" Height="42"
                                  Text="{Binding Amount, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                  Tag="{Binding Id}"
                                  TextChanged="MatAmount_Changed"/>

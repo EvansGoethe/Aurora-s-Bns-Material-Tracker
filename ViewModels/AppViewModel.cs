@@ -26,6 +26,9 @@ namespace BnsMaterialTracker.ViewModels
         public AppSettings    Settings  => _save.Settings;
         public ObservableCollection<Goal> Goals { get; } = new();
 
+        // ── Language change event ──────────────────────────────
+        public event Action? LanguageChanged;
+
         // ── Navigation ─────────────────────────────────────────
         private string _currentPage = "dashboard";
         public string CurrentPage { get => _currentPage; set { if (Set(ref _currentPage, value)) OnPropertyChanged(nameof(CurrentPage)); } }
@@ -170,12 +173,7 @@ namespace BnsMaterialTracker.ViewModels
             Settings.Language = lang;
             L10n.SetLanguage(lang);
             Persist();
-            // Ask user to restart for full effect (or rebuild views)
-            MessageBox.Show(
-                lang == "en" ? "Please restart the app to apply the language change." :
-                lang == "zh-CN" ? "请重启应用以应用语言更改。" :
-                "請重新啟動程式以套用語言設定。",
-                "Language / 語言", MessageBoxButton.OK, MessageBoxImage.Information);
+            LanguageChanged?.Invoke();
         }
 
         public void UpdateSettings()

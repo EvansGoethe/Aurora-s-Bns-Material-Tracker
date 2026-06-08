@@ -2,7 +2,7 @@
 #define AppVersion "1.0.0"
 #define AppPublisher "EvansGoethe"
 #define AppURL "https://github.com/EvansGoethe/Aurora-s-Bns-Material-Tracker"
-#define AppExeName "洛洛劍靈材料追蹤器.exe"
+#define AppExeName "Aurora's BnS Material Tracker.exe"
 #define SourceDir "D:\代碼農\BnsMaterialTracker\publish"
 
 [Setup]
@@ -17,7 +17,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
 OutputDir={#SourceDir}\..\installer_output
-OutputBaseFilename=Setup_洛洛劍靈材料追蹤器_v{#AppVersion}
+OutputBaseFilename=Setup_Aurora_BnS_Material_Tracker_v{#AppVersion}
 SetupIconFile={#SourceDir}\..\ABnS_.ico
 Compression=lzma2/ultra64
 SolidCompression=yes

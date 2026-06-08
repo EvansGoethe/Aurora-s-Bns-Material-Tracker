@@ -5,7 +5,7 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <AssemblyName>洛洛劍靈材料追蹤器</AssemblyName>
+    <AssemblyName>Auroras BnS Material Tracker</AssemblyName>
     <RootNamespace>BnsMaterialTracker</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>

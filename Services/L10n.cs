@@ -33,6 +33,7 @@ namespace BnsMaterialTracker.Services
         // ── 繁體中文 ───────────────────────────────────────────
         private static readonly Dictionary<string, string> ZhTW = new()
         {
+            ["app.windowTitle"]  = "洛洛劍靈材料追蹤器",
             ["nav.gameTitle"]    = "洛洛劍靈",
             ["nav.appTitle"]     = "材料追蹤器",
             ["nav.server"]       = "台服",
@@ -208,6 +209,7 @@ namespace BnsMaterialTracker.Services
         // ── 簡體中文 ───────────────────────────────────────────
         private static readonly Dictionary<string, string> ZhCN = new()
         {
+            ["app.windowTitle"]  = "洛洛剑灵材料追踪器",
             ["nav.gameTitle"]    = "剑灵",
             ["nav.appTitle"]     = "材料追踪器",
             ["nav.server"]       = "台服",
@@ -383,6 +385,7 @@ namespace BnsMaterialTracker.Services
         // ── English ────────────────────────────────────────────
         private static readonly Dictionary<string, string> En = new()
         {
+            ["app.windowTitle"]  = "Aurora's BnS Material Tracker",
             ["nav.gameTitle"]    = "Aurora's BnS",
             ["nav.appTitle"]     = "Material Tracker",
             ["nav.server"]       = "TW Server",

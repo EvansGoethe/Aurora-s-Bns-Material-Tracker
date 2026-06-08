@@ -29,8 +29,18 @@ namespace BnsMaterialTracker
         {
             _vm = new AppViewModel();
 
-            // Apply L10n to sidebar labels
+            // Apply L10n to sidebar labels (and window title)
             ApplySidebarL10n();
+
+            // Live-update sidebar + title when language changes
+            _vm.LanguageChanged += () =>
+            {
+                ApplySidebarL10n();
+                // Refresh current page so its labels also update immediately
+                if (MainContent.Content is FrameworkElement fe &&
+                    fe.GetType().GetMethod("Refresh") is { } m)
+                    m.Invoke(fe, null);
+            };
 
             // Create views (all share the same ViewModel)
             _dashboard   = new DashboardView   { DataContext = _vm };
@@ -47,6 +57,7 @@ namespace BnsMaterialTracker
 
         private void ApplySidebarL10n()
         {
+            Title              = L10n.T("app.windowTitle");
             TxtGameTitle.Text  = L10n.T("nav.gameTitle");
             TxtAppTitle.Text   = L10n.T("nav.appTitle");
             TxtServer.Text     = L10n.T("nav.server");
