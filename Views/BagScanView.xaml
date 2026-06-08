@@ -108,14 +108,14 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBox x:Name="TxtCellSize" Grid.Column="0" Text="64" Height="34"
-                       TextAlignment="Center" FontSize="15"
+              <TextBox x:Name="TxtCellSize" Grid.Column="0" Text="64" Height="42"
+                       TextAlignment="Center" FontSize="16"
                        TextChanged="TxtCellSize_Changed"/>
-              <Button Grid.Column="1" Content="－" Width="34" Height="34" Margin="4,0,0,0"
-                      FontSize="16" Style="{StaticResource BtnGhost}"
+              <Button Grid.Column="1" Content="－" Width="42" Height="42" Margin="4,0,0,0"
+                      FontSize="18" Style="{StaticResource BtnGhost}"
                       Click="BtnCellSizeDec_Click"/>
-              <Button Grid.Column="2" Content="＋" Width="34" Height="34" Margin="4,0,0,0"
-                      FontSize="16" Style="{StaticResource BtnPrimary}"
+              <Button Grid.Column="2" Content="＋" Width="42" Height="42" Margin="4,0,0,0"
+                      FontSize="18" Style="{StaticResource BtnPrimary}"
                       Click="BtnCellSizeInc_Click"/>
             </Grid>
 
