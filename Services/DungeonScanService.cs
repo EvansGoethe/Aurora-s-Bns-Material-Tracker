@@ -14,6 +14,7 @@ namespace BnsMaterialTracker.Services
     {
         public string       Difficulty { get; set; } = "";  // "common" | "easy"/"normal"/"skilled" | "1"-"7"
         public string       Label      { get; set; } = "";  // original Chinese header text
+        public string       RawText    { get; set; } = "";  // compact (whitespace-free) section body for substring matching
         public List<string> ItemNames  { get; set; } = new();
     }
 
@@ -28,30 +29,10 @@ namespace BnsMaterialTracker.Services
 
     public static class DungeonScanService
     {
-        private static readonly Dictionary<string, string> HeroSectionMap = new()
-        {
-            ["共通獎勵"] = "common",
-            ["入門獎勵"] = "easy",
-            ["一般獎勵"] = "normal",
-            ["熟練獎勵"] = "skilled",
-        };
-
-        private static readonly HashSet<string> SkipTokens = new()
-        {
-            "其他", "服裝", "其他服裝",
-        };
-
-        private static readonly string[] NoiseKeywords =
-        {
-            "以上", "等級", "章：", "統合配對", "可以統合", "入場條件",
-            "段：", "搭配武器", "為了", "而建", "所到之處", "引發",
-        };
-
         // ── Public API ─────────────────────────────────────────────────────
 
         public static async Task<DungeonScanResult?> ScanAsync(BitmapSource screenshot)
         {
-            // Prefer Chinese engines since dungeon info pages are in Chinese
             var engine = TryChineseEngine()
                       ?? OcrEngine.TryCreateFromUserProfileLanguages()
                       ?? TryAnyEngine();
@@ -67,83 +48,103 @@ namespace BnsMaterialTracker.Services
         }
 
         // ── Parser ─────────────────────────────────────────────────────────
+        //
+        // Windows OCR does not guarantee one section-header per line: the newline
+        // boundary may fall inside "入門\n獎勵", and text at the same visual Y-level
+        // gets merged into one OCR line.
+        //
+        // Strategy: strip ALL whitespace from the OCR output to form a compact
+        // string, then find known section-header substrings by index position.
+        // The text between two adjacent headers is stored verbatim as RawText;
+        // the view does material matching by searching known material names as
+        // substrings within RawText — no splitting required.
 
         internal static DungeonScanResult Parse(string rawText)
         {
-            var lines = rawText
-                .Split('\n')
-                .Select(l => l.Trim())
-                .Where(l => l.Length > 0)
-                .ToList();
-
             var result = new DungeonScanResult();
 
-            // ── Dungeon name: first short, non-noise line before any reward header ──
-            foreach (var line in lines)
+            // Collapse all whitespace so split headers like "入門\n獎勵" reunite
+            string compact = Regex.Replace(rawText, @"\s", "");
+
+            // ── Locate section headers ──────────────────────────────────────
+            // Include 熱練獎勵 as a variant because OCR often reads 熟 as 熱
+            var headerDefs = new[]
             {
-                if (line.Contains("獎勵")) break;
-                if (line.Length < 2 || line.Length > 20) continue;
-                if (line == "副本" || line == "可以統合配對") continue;
-                if (IsNoiseLine(line)) continue;
-                result.DungeonName = line;
-                break;
+                ("共通獎勵", "common"),
+                ("入門獎勵", "easy"),
+                ("一般獎勵", "normal"),
+                ("熟練獎勵", "skilled"),
+                ("熱練獎勵", "skilled"),
+            };
+
+            var found     = new List<(int idx, int len, string diff, string label)>();
+            var usedDiffs = new HashSet<string>();
+
+            foreach (var (hdr, diff) in headerDefs)
+            {
+                if (usedDiffs.Contains(diff)) continue;
+                int idx = compact.IndexOf(hdr, StringComparison.Ordinal);
+                if (idx >= 0) { found.Add((idx, hdr.Length, diff, hdr)); usedDiffs.Add(diff); }
             }
+
+            // Demon mode: "封魔X段獎勵"
+            foreach (Match dm in Regex.Matches(compact, @"封魔(\d)段獎勵"))
+            {
+                string d = dm.Groups[1].Value;
+                if (!usedDiffs.Contains(d))
+                {
+                    found.Add((dm.Index, dm.Length, d, dm.Value));
+                    usedDiffs.Add(d);
+                }
+            }
+
+            found.Sort((a, b) => a.idx.CompareTo(b.idx));
+
+            // ── Dungeon name ────────────────────────────────────────────────
+            int firstHdrPos = found.Count > 0 ? found[0].idx : compact.Length;
+            string preamble = compact[..Math.Min(firstHdrPos, compact.Length)];
+            var nameM = Regex.Match(preamble, @"[一-鿿㐀-䶿]{2,10}");
+            result.DungeonName = nameM.Success ? nameM.Value : "";
 
             // ── Party size ──────────────────────────────────────────────────
-            foreach (var line in lines)
+            var psm = Regex.Match(rawText, @"(\d+)人");
+            if (psm.Success) result.PartySize = int.Parse(psm.Groups[1].Value);
+
+            // ── Mode ────────────────────────────────────────────────────────
+            if (found.Any(f => f.diff is "easy" or "normal" or "skilled"))
+                result.Mode = "hero";
+            else if (found.Any(f => Regex.IsMatch(f.diff, @"^\d$")))
+                result.Mode = "demon";
+
+            // ── Sections ────────────────────────────────────────────────────
+            for (int i = 0; i < found.Count; i++)
             {
-                var m = Regex.Match(line, @"(\d+)人");
-                if (m.Success) { result.PartySize = int.Parse(m.Groups[1].Value); break; }
-            }
+                var (idx, len, diff, label) = found[i];
+                int start = idx + len;
+                int end   = i + 1 < found.Count ? found[i + 1].idx : compact.Length;
 
-            // ── Mode + reward sections ──────────────────────────────────────
-            DungeonSection? current = null;
+                string secRaw = compact[start..end];
 
-            foreach (var line in lines)
-            {
-                // Hero section header
-                if (HeroSectionMap.TryGetValue(line, out string? diff))
+                var sec = new DungeonSection { Difficulty = diff, Label = label, RawText = secRaw };
+
+                // Best-effort token list for the preview count display
+                string noised = secRaw.Replace("其他", "").Replace("服裝", "");
+                foreach (Match m in Regex.Matches(noised, @"[一-鿿㐀-䶿]{2,}"))
                 {
-                    if (diff != "common") result.Mode = "hero";
-                    current = new DungeonSection { Difficulty = diff, Label = line };
-                    result.Sections.Add(current);
-                    continue;
+                    string t = m.Value;
+                    if (!IsNoiseItem(t)) sec.ItemNames.Add(t);
                 }
 
-                // Demon section header: "封魔X段獎勵"
-                var demonM = Regex.Match(line, @"封魔(\d)段獎勵");
-                if (demonM.Success)
-                {
-                    result.Mode = "demon";
-                    current = new DungeonSection
-                    {
-                        Difficulty = demonM.Groups[1].Value,
-                        Label = line,
-                    };
-                    result.Sections.Add(current);
-                    continue;
-                }
-
-                if (current == null || IsNoiseLine(line)) continue;
-
-                // Split line into tokens — items are space-separated in OCR output
-                foreach (var token in line.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    string t = token.Trim();
-                    if (t.Length >= 2 && !SkipTokens.Contains(t) && !IsNoiseLine(t))
-                        current.ItemNames.Add(t);
-                }
+                result.Sections.Add(sec);
             }
 
             return result;
         }
 
-        private static bool IsNoiseLine(string line)
+        private static bool IsNoiseItem(string t)
         {
-            if (line.Length <= 1) return true;
-            foreach (var kw in NoiseKeywords)
-                if (line.Contains(kw)) return true;
-            if (Regex.IsMatch(line, @"^[\d\s。，、.]+$")) return true;
+            string[] noise = { "以上", "等級", "統合配對", "可以統合", "入場條件", "為了", "而建", "所到之處", "引發", "焦土化", "寄生" };
+            foreach (var n in noise) if (t.Contains(n)) return true;
             return false;
         }
 

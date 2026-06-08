@@ -572,26 +572,24 @@ namespace BnsMaterialTracker.Views
             TxtDungName.Text = _dungScanResult.DungeonName;
 
             // Show raw OCR text for debugging
-            TxtOcrRaw.Text          = _dungScanResult.RawOcrText;
-            ExpanderOcr.Visibility  = Visibility.Visible;
+            TxtOcrRaw.Text         = _dungScanResult.RawOcrText;
+            ExpanderOcr.Visibility = Visibility.Visible;
 
             var entries = BuildPreviewEntries(_dungScanResult);
             DungEntryList.ItemsSource = entries;
 
-            int total = _dungScanResult.Sections.Sum(s => s.ItemNames.Count);
-            int unmatched = CountUnmatched(_dungScanResult);
+            int totalMatched = entries.Count > 0
+                ? _dungScanResult.Sections
+                    .Where(s => s.Difficulty != "common")
+                    .Sum(s => MatchedMaterialCount(
+                        (_dungScanResult.Sections.FirstOrDefault(c => c.Difficulty == "common")?.RawText ?? "") + s.RawText))
+                : 0;
 
-            TxtDungStatus.Text = $"✅ 偵測完成 — 找到 {total} 個掉落名稱";
+            TxtDungStatus.Text = entries.Count > 0
+                ? $"✅ 偵測完成 — 找到 {entries.Count} 個難度段落，共匹配 {totalMatched} 個材料"
+                : "⚠️ 未能識別任何難度段落，請確認截圖包含完整副本資訊頁";
 
-            if (unmatched > 0)
-            {
-                TxtDungUnmatched.Text       = $"⚠️ {unmatched} 個掉落名稱未能匹配現有材料，匯入後 materialId 欄位留空，請手動補全";
-                TxtDungUnmatched.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                TxtDungUnmatched.Visibility = Visibility.Collapsed;
-            }
+            TxtDungUnmatched.Visibility = Visibility.Collapsed;
 
             DungResultPanel.Visibility = Visibility.Visible;
             BtnDungConfirm.IsEnabled   = entries.Count > 0;
@@ -599,17 +597,17 @@ namespace BnsMaterialTracker.Views
 
         private List<string> BuildPreviewEntries(DungeonScanResult result)
         {
-            var entries  = new List<string>();
-            int common   = result.Sections.FirstOrDefault(s => s.Difficulty == "common")?.ItemNames.Count ?? 0;
+            var entries   = new List<string>();
+            string common = result.Sections.FirstOrDefault(s => s.Difficulty == "common")?.RawText ?? "";
 
             if (result.Mode == "hero")
             {
                 foreach (var (diff, label) in new[] { ("easy","入門"), ("normal","一般"), ("skilled","熟練") })
                 {
-                    var sec   = result.Sections.FirstOrDefault(s => s.Difficulty == diff);
-                    int count = (sec?.ItemNames.Count ?? 0) + common;
-                    if (sec != null || common > 0)
-                        entries.Add($"  • {result.DungeonName}（{label}） — {count} 個掉落");
+                    var sec = result.Sections.FirstOrDefault(s => s.Difficulty == diff);
+                    if (sec == null && string.IsNullOrEmpty(common)) continue;
+                    int matched = MatchedMaterialCount(common + (sec?.RawText ?? ""));
+                    entries.Add($"  • {result.DungeonName}（{label}） — 匹配 {matched} 個材料");
                 }
             }
             else
@@ -618,21 +616,23 @@ namespace BnsMaterialTracker.Views
                 {
                     var sec = result.Sections.FirstOrDefault(s => s.Difficulty == i.ToString());
                     if (sec == null) continue;
-                    entries.Add($"  • {result.DungeonName}（封魔{i}段） — {sec.ItemNames.Count + common} 個掉落");
+                    int matched = MatchedMaterialCount(common + sec.RawText);
+                    entries.Add($"  • {result.DungeonName}（封魔{i}段） — 匹配 {matched} 個材料");
                 }
             }
 
-            if (entries.Count == 0 && common > 0)
-                entries.Add($"  • {result.DungeonName} — {common} 個掉落");
+            if (entries.Count == 0 && !string.IsNullOrEmpty(common))
+            {
+                int matched = MatchedMaterialCount(common);
+                entries.Add($"  • {result.DungeonName} — 匹配 {matched} 個材料");
+            }
 
             return entries;
         }
 
-        private int CountUnmatched(DungeonScanResult result)
-            => result.Sections
-                     .SelectMany(s => s.ItemNames)
-                     .Distinct()
-                     .Count(name => string.IsNullOrEmpty(MatchMaterialId(name)));
+        // Count how many materials from the list appear as substrings in the given text
+        private int MatchedMaterialCount(string combinedText)
+            => MaterialList.Count(m => !string.IsNullOrEmpty(m.Name) && combinedText.Contains(m.Name));
 
         private void BtnDungConfirm_Click(object sender, RoutedEventArgs e)
         {
@@ -641,17 +641,16 @@ namespace BnsMaterialTracker.Views
             string baseName = TxtDungName.Text.Trim();
             if (string.IsNullOrEmpty(baseName)) baseName = _dungScanResult.DungeonName;
 
-            var common     = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == "common");
-            var commonItems = common?.ItemNames ?? new List<string>();
-            int added      = 0;
+            string commonRaw = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == "common")?.RawText ?? "";
+            int added = 0;
 
             if (_dungScanResult.Mode == "hero")
             {
                 foreach (var (diff, label) in new[] { ("easy","入門"), ("normal","一般"), ("skilled","熟練") })
                 {
                     var sec = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == diff);
-                    if (sec == null && commonItems.Count == 0) continue;
-                    var row = BuildDungeonRow(baseName, label, "hero", diff, commonItems, sec?.ItemNames ?? new List<string>(), added);
+                    if (sec == null && string.IsNullOrEmpty(commonRaw)) continue;
+                    var row = BuildDungeonRow(baseName, label, "hero", diff, commonRaw, sec?.RawText ?? "", added);
                     DungeonList.Add(row);
                     added++;
                 }
@@ -662,7 +661,7 @@ namespace BnsMaterialTracker.Views
                 {
                     var sec = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == i.ToString());
                     if (sec == null) continue;
-                    var row = BuildDungeonRow(baseName, $"封魔{i}段", "demon", i.ToString(), commonItems, sec.ItemNames, added);
+                    var row = BuildDungeonRow(baseName, $"封魔{i}段", "demon", i.ToString(), commonRaw, sec.RawText, added);
                     DungeonList.Add(row);
                     added++;
                 }
@@ -676,16 +675,12 @@ namespace BnsMaterialTracker.Views
 
         private DungeonRow BuildDungeonRow(
             string baseName, string diffLabel, string mode, string diff,
-            List<string> commonItems, List<string> diffItems, int index)
+            string commonRawText, string diffRawText, int index)
         {
-            string fullName = mode == "hero" || diffItems.Count > 0
-                ? $"{baseName}（{diffLabel}）"
-                : baseName;
-
             var row = new DungeonRow
             {
                 Id               = $"{SanitizeId(baseName)}_{diff}",
-                Name             = fullName,
+                Name             = $"{baseName}（{diffLabel}）",
                 ShortName        = "",
                 Mode             = mode,
                 Difficulty       = diff,
@@ -694,30 +689,26 @@ namespace BnsMaterialTracker.Views
                 EstimatedMinutes = 20,
             };
 
-            foreach (var item in commonItems.Concat(diffItems))
-                row.Drops.Add(new DropRow
-                {
-                    MaterialId = MatchMaterialId(item),
-                    Chance     = 1.0,
-                    Min        = 1,
-                    Max        = 1,
-                    Parent     = row,
-                });
+            // Search for each known material name as a substring in the combined
+            // compact OCR text — more reliable than trying to tokenise garbled OCR
+            string combined = commonRawText + diffRawText;
+            foreach (var mat in MaterialList)
+            {
+                if (!string.IsNullOrEmpty(mat.Name) && combined.Contains(mat.Name))
+                    row.Drops.Add(new DropRow
+                    {
+                        MaterialId = mat.Id,
+                        Chance     = 1.0,
+                        Min        = 1,
+                        Max        = 1,
+                        Parent     = row,
+                    });
+            }
 
             return row;
         }
 
         private static string SanitizeId(string name)
             => Regex.Replace(name, @"[^\w一-鿿]", "_").ToLowerInvariant();
-
-        private string MatchMaterialId(string itemName)
-        {
-            var exact = MaterialList.FirstOrDefault(m => m.Name == itemName);
-            if (exact != null) return exact.Id;
-
-            var partial = MaterialList.FirstOrDefault(m =>
-                m.Name.Contains(itemName) || itemName.Contains(m.Name));
-            return partial?.Id ?? "";
-        }
     }
 }
