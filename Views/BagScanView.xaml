@@ -8,7 +8,7 @@
     <Grid x:Name="PickerOverlay" Visibility="Collapsed"
           Background="#BB000000" Panel.ZIndex="20">
       <Border Background="{StaticResource BgCard}"
-              BorderBrush="{StaticResource Border}"
+              BorderBrush="{StaticResource BorderColor}"
               BorderThickness="1" CornerRadius="8"
               Padding="20" Width="340"
               VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -24,7 +24,7 @@
           <!-- Material list -->
           <ListBox x:Name="PickerList" Height="200"
                    Background="{StaticResource BgApp}"
-                   BorderBrush="{StaticResource Border}"
+                   BorderBrush="{StaticResource BorderColor}"
                    BorderThickness="1">
             <ListBox.ItemTemplate>
               <DataTemplate>
@@ -39,7 +39,7 @@
           <!-- Buttons -->
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button x:Name="BtnPickCancel" Content="取消" Width="72" Margin="0,0,8,0"
-                    Style="{StaticResource BtnSecondary}" Click="BtnPickCancel_Click"/>
+                    Style="{StaticResource BtnGhost}" Click="BtnPickCancel_Click"/>
             <Button x:Name="BtnPickConfirm" Content="確定" Width="72"
                     Style="{StaticResource BtnPrimary}" Click="BtnPickConfirm_Click"/>
           </StackPanel>
@@ -78,7 +78,7 @@
 
       <!-- ── Right: controls panel ──────────────────────────────── -->
       <Border Grid.Column="1" Background="{StaticResource BgSidebar}"
-              BorderBrush="{StaticResource Border}" BorderThickness="1,0,0,0">
+              BorderBrush="{StaticResource BorderColor}" BorderThickness="1,0,0,0">
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
           <StackPanel Margin="14,16,14,16">
 
