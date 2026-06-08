@@ -380,39 +380,45 @@ namespace BnsMaterialTracker.Views
         {
             if (_screenshot == null || ImgScreenshot.ActualWidth <= 0) return;
 
-            int ts = BagScanService.TemplateSize;
+            // Use cellSize so the cyan box aligns with the green registration box
             foreach (var r in _lastResults)
             {
                 if (!r.Found) continue;
 
-                var (dx, dy, dw, dh) = ImageToDisplay(
-                    ImgScreenshot, _screenshot,
-                    r.FoundX, r.FoundY, ts, ts);
+                // FoundX/Y is the template top-left (cx-20, cy-20).
+                // Cell top-left = (cx - cellSize/2, cy - cellSize/2)
+                //               = (FoundX + 20 - cellSize/2, FoundY + 20 - cellSize/2)
+                int ts      = BagScanService.TemplateSize;
+                int cellX   = r.FoundX + ts / 2 - _cellSize / 2;
+                int cellY   = r.FoundY + ts / 2 - _cellSize / 2;
 
-                // Cyan found box
+                var (dx, dy, dw, dh) = ImageToDisplay(
+                    ImgScreenshot, _screenshot, cellX, cellY, _cellSize, _cellSize);
+
+                // Cyan dashed box (on top of green registration box)
                 var rect = new Rectangle
                 {
                     Width           = dw,
                     Height          = dh,
                     Stroke          = Brushes.Cyan,
                     StrokeThickness = 2,
-                    StrokeDashArray = new DoubleCollection { 3, 2 },
+                    StrokeDashArray = new DoubleCollection { 4, 3 },
                 };
                 Canvas.SetLeft(rect, dx);
                 Canvas.SetTop(rect,  dy);
                 OverlayCanvas.Children.Add(rect);
 
-                // Score label
+                // Score + quantity label above the box
+                string qty = r.Quantity >= 0 ? r.Quantity.ToString("N0") : "?";
                 var lbl = new TextBlock
                 {
-                    Text       = $"{r.Quantity:N0} ({r.MatchScore:P0})",
+                    Text       = $"{qty} ({r.MatchScore:P0})",
                     FontSize   = 9,
                     Foreground = Brushes.Cyan,
-                    Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
+                    Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
                 };
-                if (r.Quantity < 0) lbl.Text = $"? ({r.MatchScore:P0})";
                 Canvas.SetLeft(lbl, dx);
-                Canvas.SetTop(lbl,  dy - 13);
+                Canvas.SetTop(lbl,  dy - 14);
                 OverlayCanvas.Children.Add(lbl);
             }
         }
