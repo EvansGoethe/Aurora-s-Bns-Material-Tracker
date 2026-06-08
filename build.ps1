@@ -85,8 +85,8 @@ Remove-Item $ZipStaging -Recurse -Force
 
 # ── 3c. Chinese-named local copies (no version, NOT uploaded) ──
 Write-Host "     Creating Chinese-named local copies..." -ForegroundColor Cyan
-$CnSetup = "$Root\installer_output\洛洛劍靈材料追蹤器_安裝版.exe"
-$CnZip   = "$Root\installer_output\洛洛劍靈材料追蹤器_免安裝版.zip"
+$CnSetup = "$Root\installer_output\洛洛劍靈材料追蹤器安裝工具.exe"
+$CnZip   = "$Root\installer_output\洛洛劍靈材料追蹤器.zip"
 Copy-Item $SetupFile $CnSetup -Force
 Copy-Item $ZipPath   $CnZip   -Force
 
