@@ -1,0 +1,25 @@
+{
+  "materials": [
+    { "id": "sacred_oil",       "name": "神聖之油",     "icon": "🫙", "category": "weapon" },
+    { "id": "moonstone",        "name": "月光石",       "icon": "🌙", "category": "weapon" },
+    { "id": "weapon_stone",     "name": "武器強化石",   "icon": "🗡️", "category": "weapon" },
+
+    { "id": "bracelet_mat",     "name": "手鐲強化石",   "icon": "💠", "category": "bracelet" },
+    { "id": "necklace_mat",     "name": "項鍊強化石",   "icon": "📿", "category": "necklace" },
+    { "id": "belt_mat",         "name": "腰帶強化石",   "icon": "🔶", "category": "belt" },
+    { "id": "gloves_mat",       "name": "護拳強化石",   "icon": "🥊", "category": "gloves" },
+    { "id": "earring_mat",      "name": "耳環強化石",   "icon": "💎", "category": "earring" },
+
+    { "id": "secret_token",     "name": "秘功牌",       "icon": "🎴", "category": "secretToken" },
+    { "id": "divine_token",     "name": "神功牌",       "icon": "🃏", "category": "divineToken" },
+    { "id": "soul_mat",         "name": "魂強化石",     "icon": "👻", "category": "soul" },
+    { "id": "spirit_mat",       "name": "靈強化石",     "icon": "✨", "category": "spirit" },
+    { "id": "guardian_stone",   "name": "守護石",       "icon": "🛡️", "category": "guardianStone" },
+    { "id": "star_mat",         "name": "星強化石",     "icon": "⭐", "category": "star" },
+    { "id": "inner_bracelet",   "name": "內功釧強化石", "icon": "🔵", "category": "innerBracelet" },
+    { "id": "outer_bracelet",   "name": "外功釧強化石", "icon": "🔴", "category": "outerBracelet" },
+
+    { "id": "upgrade_stone",    "name": "升級石",       "icon": "🔮", "category": "exchange" },
+    { "id": "exchange_token",   "name": "兌換代幣",     "icon": "🎫", "category": "exchange" }
+  ]
+}

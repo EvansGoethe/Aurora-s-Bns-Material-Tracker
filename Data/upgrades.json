@@ -1,0 +1,200 @@
+{
+  "weaponUpgrades": [
+    {
+      "id": "w_stage1", "name": "武器升至2階", "category": "weapon",
+      "fromStage": 1, "toStage": 2, "goldCost": 50,
+      "requirements": [
+        { "materialId": "sacred_oil",   "amount": 10 },
+        { "materialId": "moonstone",    "amount": 20 },
+        { "materialId": "weapon_stone", "amount": 5  }
+      ]
+    },
+    {
+      "id": "w_stage2", "name": "武器升至3階", "category": "weapon",
+      "fromStage": 2, "toStage": 3, "goldCost": 120,
+      "requirements": [
+        { "materialId": "sacred_oil",   "amount": 25 },
+        { "materialId": "moonstone",    "amount": 50 },
+        { "materialId": "weapon_stone", "amount": 15 }
+      ]
+    },
+    {
+      "id": "w_stage3", "name": "武器升至4階", "category": "weapon",
+      "fromStage": 3, "toStage": 4, "goldCost": 300,
+      "requirements": [
+        { "materialId": "sacred_oil",   "amount": 60  },
+        { "materialId": "moonstone",    "amount": 100 },
+        { "materialId": "weapon_stone", "amount": 30  }
+      ]
+    }
+  ],
+
+  "braceletUpgrades": [
+    {
+      "id": "brace_1", "name": "手鐲升至2階", "category": "bracelet",
+      "fromStage": 1, "toStage": 2, "goldCost": 20,
+      "requirements": [ { "materialId": "bracelet_mat", "amount": 8 } ]
+    },
+    {
+      "id": "brace_2", "name": "手鐲升至3階", "category": "bracelet",
+      "fromStage": 2, "toStage": 3, "goldCost": 50,
+      "requirements": [ { "materialId": "bracelet_mat", "amount": 20 } ]
+    }
+  ],
+
+  "necklaceUpgrades": [
+    {
+      "id": "neck_1", "name": "項鍊升至2階", "category": "necklace",
+      "fromStage": 1, "toStage": 2, "goldCost": 20,
+      "requirements": [ { "materialId": "necklace_mat", "amount": 8 } ]
+    },
+    {
+      "id": "neck_2", "name": "項鍊升至3階", "category": "necklace",
+      "fromStage": 2, "toStage": 3, "goldCost": 50,
+      "requirements": [ { "materialId": "necklace_mat", "amount": 20 } ]
+    }
+  ],
+
+  "beltUpgrades": [
+    {
+      "id": "belt_1", "name": "腰帶升至2階", "category": "belt",
+      "fromStage": 1, "toStage": 2, "goldCost": 20,
+      "requirements": [ { "materialId": "belt_mat", "amount": 8 } ]
+    },
+    {
+      "id": "belt_2", "name": "腰帶升至3階", "category": "belt",
+      "fromStage": 2, "toStage": 3, "goldCost": 50,
+      "requirements": [ { "materialId": "belt_mat", "amount": 20 } ]
+    }
+  ],
+
+  "glovesUpgrades": [
+    {
+      "id": "gloves_1", "name": "護拳升至2階", "category": "gloves",
+      "fromStage": 1, "toStage": 2, "goldCost": 20,
+      "requirements": [ { "materialId": "gloves_mat", "amount": 8 } ]
+    },
+    {
+      "id": "gloves_2", "name": "護拳升至3階", "category": "gloves",
+      "fromStage": 2, "toStage": 3, "goldCost": 50,
+      "requirements": [ { "materialId": "gloves_mat", "amount": 20 } ]
+    }
+  ],
+
+  "earringUpgrades": [
+    {
+      "id": "ear_1", "name": "耳環升至2階", "category": "earring",
+      "fromStage": 1, "toStage": 2, "goldCost": 20,
+      "requirements": [ { "materialId": "earring_mat", "amount": 8 } ]
+    },
+    {
+      "id": "ear_2", "name": "耳環升至3階", "category": "earring",
+      "fromStage": 2, "toStage": 3, "goldCost": 50,
+      "requirements": [ { "materialId": "earring_mat", "amount": 20 } ]
+    }
+  ],
+
+  "secretTokenUpgrades": [
+    {
+      "id": "sec_1", "name": "秘功牌升至2階", "category": "secretToken",
+      "fromStage": 1, "toStage": 2, "goldCost": 30,
+      "requirements": [ { "materialId": "secret_token", "amount": 10 } ]
+    },
+    {
+      "id": "sec_2", "name": "秘功牌升至3階", "category": "secretToken",
+      "fromStage": 2, "toStage": 3, "goldCost": 80,
+      "requirements": [ { "materialId": "secret_token", "amount": 25 } ]
+    }
+  ],
+
+  "divineTokenUpgrades": [
+    {
+      "id": "div_1", "name": "神功牌升至2階", "category": "divineToken",
+      "fromStage": 1, "toStage": 2, "goldCost": 30,
+      "requirements": [ { "materialId": "divine_token", "amount": 10 } ]
+    },
+    {
+      "id": "div_2", "name": "神功牌升至3階", "category": "divineToken",
+      "fromStage": 2, "toStage": 3, "goldCost": 80,
+      "requirements": [ { "materialId": "divine_token", "amount": 25 } ]
+    }
+  ],
+
+  "soulUpgrades": [
+    {
+      "id": "soul_1", "name": "魂升至2階", "category": "soul",
+      "fromStage": 1, "toStage": 2, "goldCost": 40,
+      "requirements": [ { "materialId": "soul_mat", "amount": 15 } ]
+    },
+    {
+      "id": "soul_2", "name": "魂升至3階", "category": "soul",
+      "fromStage": 2, "toStage": 3, "goldCost": 100,
+      "requirements": [ { "materialId": "soul_mat", "amount": 40 } ]
+    }
+  ],
+
+  "spiritUpgrades": [
+    {
+      "id": "spirit_1", "name": "靈升至2階", "category": "spirit",
+      "fromStage": 1, "toStage": 2, "goldCost": 40,
+      "requirements": [ { "materialId": "spirit_mat", "amount": 15 } ]
+    },
+    {
+      "id": "spirit_2", "name": "靈升至3階", "category": "spirit",
+      "fromStage": 2, "toStage": 3, "goldCost": 100,
+      "requirements": [ { "materialId": "spirit_mat", "amount": 40 } ]
+    }
+  ],
+
+  "guardianStoneUpgrades": [
+    {
+      "id": "guard_1", "name": "守護石升至2階", "category": "guardianStone",
+      "fromStage": 1, "toStage": 2, "goldCost": 25,
+      "requirements": [ { "materialId": "guardian_stone", "amount": 12 } ]
+    },
+    {
+      "id": "guard_2", "name": "守護石升至3階", "category": "guardianStone",
+      "fromStage": 2, "toStage": 3, "goldCost": 60,
+      "requirements": [ { "materialId": "guardian_stone", "amount": 30 } ]
+    }
+  ],
+
+  "starUpgrades": [
+    {
+      "id": "star_1", "name": "星升至2階", "category": "star",
+      "fromStage": 1, "toStage": 2, "goldCost": 25,
+      "requirements": [ { "materialId": "star_mat", "amount": 12 } ]
+    },
+    {
+      "id": "star_2", "name": "星升至3階", "category": "star",
+      "fromStage": 2, "toStage": 3, "goldCost": 60,
+      "requirements": [ { "materialId": "star_mat", "amount": 30 } ]
+    }
+  ],
+
+  "innerBraceletUpgrades": [
+    {
+      "id": "inner_1", "name": "內功釧升至2階", "category": "innerBracelet",
+      "fromStage": 1, "toStage": 2, "goldCost": 35,
+      "requirements": [ { "materialId": "inner_bracelet", "amount": 10 } ]
+    },
+    {
+      "id": "inner_2", "name": "內功釧升至3階", "category": "innerBracelet",
+      "fromStage": 2, "toStage": 3, "goldCost": 90,
+      "requirements": [ { "materialId": "inner_bracelet", "amount": 25 } ]
+    }
+  ],
+
+  "outerBraceletUpgrades": [
+    {
+      "id": "outer_1", "name": "外功釧升至2階", "category": "outerBracelet",
+      "fromStage": 1, "toStage": 2, "goldCost": 35,
+      "requirements": [ { "materialId": "outer_bracelet", "amount": 10 } ]
+    },
+    {
+      "id": "outer_2", "name": "外功釧升至3階", "category": "outerBracelet",
+      "fromStage": 2, "toStage": 3, "goldCost": 90,
+      "requirements": [ { "materialId": "outer_bracelet", "amount": 25 } ]
+    }
+  ]
+}

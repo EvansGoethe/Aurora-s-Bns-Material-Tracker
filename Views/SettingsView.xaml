@@ -1,0 +1,147 @@
+<UserControl x:Class="BnsMaterialTracker.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <ScrollViewer Background="{StaticResource BgApp}" Padding="20">
+    <StackPanel MaxWidth="600" HorizontalAlignment="Left">
+
+      <TextBlock x:Name="TxtTitle" Text="設定"
+                 FontSize="22" FontWeight="Bold" Margin="0,0,0,20"/>
+
+      <!-- Language -->
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <TextBlock x:Name="TxtLangTitle" Text="語言"
+                     FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <StackPanel Orientation="Horizontal">
+            <Button x:Name="BtnZhTW" Style="{StaticResource BtnPrimary}"
+                    Margin="0,0,8,0" Click="BtnLang_Click" Tag="zh-TW">
+              <TextBlock Text="繁體中文"/>
+            </Button>
+            <Button x:Name="BtnZhCN" Style="{StaticResource BtnGhost}"
+                    Margin="0,0,8,0" Click="BtnLang_Click" Tag="zh-CN">
+              <TextBlock Text="简体中文"/>
+            </Button>
+            <Button x:Name="BtnEn" Style="{StaticResource BtnGhost}"
+                    Click="BtnLang_Click" Tag="en">
+              <TextBlock Text="English"/>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Daily play time -->
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="TxtPlayTitle" Text="每日遊玩時間"
+                       FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock x:Name="TxtPlayValue" Grid.Column="1"
+                       Foreground="{StaticResource AccentBlue}" FontWeight="Bold"/>
+          </Grid>
+          <TextBlock x:Name="TxtPlayDesc"
+                     Foreground="{StaticResource TextSecondary}" FontSize="12"
+                     Margin="0,0,0,10"/>
+          <Slider x:Name="SliderPlay"
+                  Minimum="30" Maximum="480" TickFrequency="30"
+                  IsSnapToTickEnabled="True"
+                  ValueChanged="SliderPlay_ValueChanged"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Reset reminders -->
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="TxtReminderTitle" Text="副本重置提醒"
+                       FontSize="15" FontWeight="SemiBold"/>
+            <CheckBox x:Name="ChkReminders" Grid.Column="1"
+                      Checked="ChkReminders_Changed" Unchecked="ChkReminders_Changed"/>
+          </Grid>
+          <TextBlock x:Name="TxtReminderDesc"
+                     Foreground="{StaticResource TextSecondary}" FontSize="12"
+                     Margin="0,0,0,12"/>
+
+          <StackPanel x:Name="PanelReminderDetail">
+            <!-- Minutes before -->
+            <Grid Margin="0,0,0,8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="120"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="TxtBeforeLabel" Text="重置前幾分鐘提醒"
+                         VerticalAlignment="Center"/>
+              <TextBox x:Name="TxtMinsBefore" Grid.Column="1" Height="42"
+                       TextChanged="Settings_Changed"/>
+            </Grid>
+
+            <!-- Daily reset hour -->
+            <TextBlock x:Name="TxtDailyResetTitle" Text="每日副本重置"
+                       FontWeight="SemiBold" Margin="0,8,0,4"/>
+            <Grid Margin="0,0,0,8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="120"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="TxtDailyHourLabel" Text="重置時間（小時）"
+                         VerticalAlignment="Center"/>
+              <TextBox x:Name="TxtDailyHour" Grid.Column="1" Height="42"
+                       TextChanged="Settings_Changed"/>
+            </Grid>
+
+            <!-- Weekly reset -->
+            <TextBlock x:Name="TxtWeeklyResetTitle" Text="每週副本重置"
+                       FontWeight="SemiBold" Margin="0,8,0,4"/>
+            <Grid Margin="0,0,0,8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="TxtWeeklyDayLabel" Text="重置星期"
+                         VerticalAlignment="Center"/>
+              <ComboBox x:Name="CmbWeeklyDay" Grid.Column="1" Width="140" Height="42"
+                        SelectionChanged="CmbWeeklyDay_Changed"/>
+            </Grid>
+            <Grid Margin="0,0,0,8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="120"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="TxtWeeklyHourLabel" Text="重置時間（小時）"
+                         VerticalAlignment="Center"/>
+              <TextBox x:Name="TxtWeeklyHour" Grid.Column="1" Height="42"
+                       TextChanged="Settings_Changed"/>
+            </Grid>
+
+            <!-- Test notification -->
+            <Button x:Name="BtnTestNotif" Style="{StaticResource BtnGhost}"
+                    Click="BtnTestNotif_Click" Margin="0,8,0,0">
+              <TextBlock x:Name="TxtTestNotif" Text="🔔 測試通知"/>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Hints -->
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <TextBlock x:Name="TxtHint1" FontSize="12"
+                     Foreground="{StaticResource TextMuted}" Margin="0,2"/>
+          <TextBlock x:Name="TxtHint2" FontSize="12"
+                     Foreground="{StaticResource TextMuted}" Margin="0,2"/>
+          <TextBlock x:Name="TxtHint3" FontSize="12"
+                     Foreground="{StaticResource TextMuted}" Margin="0,2"/>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

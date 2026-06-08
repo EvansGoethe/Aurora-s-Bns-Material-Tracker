@@ -1,0 +1,465 @@
+<UserControl x:Class="BnsMaterialTracker.Views.DataEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <UserControl.Resources>
+    <!-- Field label style -->
+    <Style x:Key="FieldLbl" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+      <Setter Property="Margin" Value="0,0,0,3"/>
+    </Style>
+    <!-- Small icon delete button -->
+    <Style x:Key="BtnDel" TargetType="Button" BasedOn="{StaticResource BtnDanger}">
+      <Setter Property="Width" Value="32"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <!-- Separator line -->
+    <Style x:Key="Sep" TargetType="Border">
+      <Setter Property="BorderThickness" Value="0,0,0,1"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BgInput}"/>
+      <Setter Property="Margin" Value="0,8,0,8"/>
+    </Style>
+  </UserControl.Resources>
+
+  <Grid Background="{StaticResource BgApp}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>  <!-- Header -->
+      <RowDefinition Height="Auto"/>  <!-- Tabs -->
+      <RowDefinition Height="*"/>     <!-- Content -->
+    </Grid.RowDefinitions>
+
+    <!-- ── Header ── -->
+    <Border Grid.Row="0" Padding="20,16,20,0">
+      <StackPanel>
+        <TextBlock x:Name="TxtTitle" Text="資料編輯"
+                   FontSize="22" FontWeight="Bold" Margin="0,0,0,4"/>
+        <TextBlock x:Name="TxtSubtitle"
+                   Foreground="{StaticResource TextSecondary}" FontSize="12"/>
+      </StackPanel>
+    </Border>
+
+    <!-- ── Tab bar ── -->
+    <Border Grid.Row="1" Padding="20,12,20,0">
+      <StackPanel Orientation="Horizontal">
+        <RadioButton x:Name="TabDungeons" Style="{StaticResource NavBtn}"
+                     GroupName="EditorTab" IsChecked="True"
+                     Checked="Tab_Checked" Tag="dungeons">
+          <TextBlock x:Name="TxtTabDungeons" Text="副本"/>
+        </RadioButton>
+        <RadioButton x:Name="TabMaterials" Style="{StaticResource NavBtn}"
+                     GroupName="EditorTab"
+                     Checked="Tab_Checked" Tag="materials">
+          <TextBlock x:Name="TxtTabMaterials" Text="材料"/>
+        </RadioButton>
+        <RadioButton x:Name="TabUpgrades" Style="{StaticResource NavBtn}"
+                     GroupName="EditorTab"
+                     Checked="Tab_Checked" Tag="upgrades">
+          <TextBlock x:Name="TxtTabUpgrades" Text="升級路線"/>
+        </RadioButton>
+      </StackPanel>
+    </Border>
+
+    <!-- ── Content area ── -->
+    <Grid Grid.Row="2" Margin="20,10,20,20">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <!-- ════════════════════════════════════════════════
+           PANEL: 副本 (Dungeons)
+           ════════════════════════════════════════════════ -->
+      <ScrollViewer x:Name="PanelDungeons" Grid.Row="0"
+                    VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <ItemsControl ItemsSource="{Binding DungeonList}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                  <StackPanel>
+
+                    <!-- Row 1: Name / ShortName / Delete -->
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="32"/>
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Grid.Column="0">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="副本名稱"/>
+                        <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="簡稱"/>
+                        <TextBox Text="{Binding ShortName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                      </StackPanel>
+                      <Button Grid.Column="4" Style="{StaticResource BtnDel}"
+                              Tag="{Binding}" Click="DeleteDungeon_Click"
+                              VerticalAlignment="Bottom">🗑</Button>
+                    </Grid>
+
+                    <!-- Row 2: ID / Type / EstimatedMinutes -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                      <StackPanel Margin="0,0,8,0" MinWidth="160">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="ID"/>
+                        <TextBox Text="{Binding Id, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,8,0" Width="100">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="重置週期"/>
+                        <ComboBox Height="36"
+                                  ItemsSource="{Binding DungeonTypeOptions,
+                                    RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                  DisplayMemberPath="Label"
+                                  SelectedValuePath="Key"
+                                  SelectedValue="{Binding Type, Mode=TwoWay}"/>
+                      </StackPanel>
+                      <StackPanel Width="80">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="預估分鐘"/>
+                        <TextBox Text="{Binding EstimatedMinutes, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                      </StackPanel>
+                    </StackPanel>
+
+                    <!-- Row 3: Mode / Difficulty / Limits -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                      <StackPanel Margin="0,0,8,0" Width="100">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="分類"/>
+                        <ComboBox Height="36"
+                                  ItemsSource="{Binding ModeOptions}"
+                                  DisplayMemberPath="Label"
+                                  SelectedValuePath="Key"
+                                  SelectedValue="{Binding Mode, Mode=TwoWay}"/>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,8,0" Width="110">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="難度"/>
+                        <ComboBox Height="36"
+                                  ItemsSource="{Binding DifficultyOptions}"
+                                  DisplayMemberPath="Label"
+                                  SelectedValuePath="Key"
+                                  SelectedValue="{Binding Difficulty, Mode=TwoWay}"/>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,8,0" Width="90">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="每日上限"/>
+                        <TextBox Text="{Binding DailyLimit, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                      </StackPanel>
+                      <StackPanel Width="90">
+                        <TextBlock Style="{StaticResource FieldLbl}" Text="每週上限"/>
+                        <TextBox Text="{Binding WeeklyLimit, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                      </StackPanel>
+                    </StackPanel>
+
+                    <!-- Drops sub-list -->
+                    <Border Style="{StaticResource Sep}"/>
+                    <TextBlock Text="掉落設定" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+
+                    <ItemsControl ItemsSource="{Binding Drops}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="8"/>
+                              <ColumnDefinition Width="72"/>
+                              <ColumnDefinition Width="8"/>
+                              <ColumnDefinition Width="64"/>
+                              <ColumnDefinition Width="8"/>
+                              <ColumnDefinition Width="64"/>
+                              <ColumnDefinition Width="8"/>
+                              <ColumnDefinition Width="32"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                              <TextBlock Style="{StaticResource FieldLbl}" Text="材料"/>
+                              <ComboBox Height="36"
+                                        ItemsSource="{Binding MaterialList,
+                                          RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                        SelectedValuePath="Id"
+                                        SelectedValue="{Binding MaterialId, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                  <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                      <TextBlock Text="{Binding Icon}" Margin="0,0,6,0" FontSize="15"
+                                                 VerticalAlignment="Center"/>
+                                      <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                  </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                              </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                              <TextBlock Style="{StaticResource FieldLbl}" Text="機率"/>
+                              <TextBox Text="{Binding Chance, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                              <TextBlock Style="{StaticResource FieldLbl}" Text="最少"/>
+                              <TextBox Text="{Binding Min, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="6">
+                              <TextBlock Style="{StaticResource FieldLbl}" Text="最多"/>
+                              <TextBox Text="{Binding Max, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                            </StackPanel>
+                            <Button Grid.Column="8" Style="{StaticResource BtnDel}"
+                                    Tag="{Binding}" Click="DeleteDrop_Click"
+                                    VerticalAlignment="Bottom">🗑</Button>
+                          </Grid>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Button Style="{StaticResource BtnGhost}" Margin="0,6,0,0"
+                            HorizontalAlignment="Left" Tag="{Binding}" Click="AddDrop_Click">
+                      ＋ 掉落
+                    </Button>
+
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- Add dungeon button -->
+          <Button Style="{StaticResource BtnGhost}" Margin="0,4,0,4"
+                  HorizontalAlignment="Left" Click="AddDungeon_Click">
+            ＋ 新增副本
+          </Button>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- ════════════════════════════════════════════════
+           PANEL: 材料 (Materials)
+           ════════════════════════════════════════════════ -->
+      <ScrollViewer x:Name="PanelMaterials" Grid.Row="0"
+                    Visibility="Collapsed"
+                    VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <Border Style="{StaticResource Card}" Padding="0">
+            <StackPanel>
+              <!-- Column headers -->
+              <Grid Margin="16,12,16,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="56"/>
+                  <ColumnDefinition Width="8"/>
+                  <ColumnDefinition Width="150"/>
+                  <ColumnDefinition Width="8"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="8"/>
+                  <ColumnDefinition Width="140"/>
+                  <ColumnDefinition Width="8"/>
+                  <ColumnDefinition Width="32"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Style="{StaticResource FieldLbl}" Text="圖示"/>
+                <TextBlock Grid.Column="2" Style="{StaticResource FieldLbl}" Text="ID"/>
+                <TextBlock Grid.Column="4" Style="{StaticResource FieldLbl}" Text="名稱"/>
+                <TextBlock Grid.Column="6" Style="{StaticResource FieldLbl}" Text="分類"/>
+              </Grid>
+              <Border Style="{StaticResource Sep}" Margin="0,0,0,4"/>
+
+              <ItemsControl ItemsSource="{Binding MaterialList}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Margin="16,0,16,6">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="56"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="32"/>
+                      </Grid.ColumnDefinitions>
+                      <TextBox Grid.Column="0"
+                               Text="{Binding Icon, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               TextAlignment="Center" FontSize="16"/>
+                      <TextBox Grid.Column="2"
+                               Text="{Binding Id, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                      <TextBox Grid.Column="4"
+                               Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                      <ComboBox Grid.Column="6" Height="36"
+                                ItemsSource="{Binding CategoryOptions,
+                                  RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                DisplayMemberPath="Label"
+                                SelectedValuePath="Key"
+                                SelectedValue="{Binding Category, Mode=TwoWay}"/>
+                      <Button Grid.Column="8" Style="{StaticResource BtnDel}"
+                              Tag="{Binding}" Click="DeleteMaterial_Click">🗑</Button>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <Button Style="{StaticResource BtnGhost}" Margin="16,8,16,12"
+                      HorizontalAlignment="Left" Click="AddMaterial_Click">
+                ＋ 新增材料
+              </Button>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- ════════════════════════════════════════════════
+           PANEL: 升級路線 (Upgrades)
+           ════════════════════════════════════════════════ -->
+      <Grid x:Name="PanelUpgrades" Grid.Row="0" Visibility="Collapsed">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>  <!-- Category filter bar -->
+          <RowDefinition Height="*"/>     <!-- Steps list -->
+        </Grid.RowDefinitions>
+
+        <!-- Category filter -->
+        <Border Grid.Row="0" Margin="0,0,0,10">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="分類：" VerticalAlignment="Center"
+                       Foreground="{StaticResource TextSecondary}" Margin="0,0,8,0"/>
+            <ComboBox ItemsSource="{Binding UpgradeCategoryOptions}"
+                      DisplayMemberPath="Label"
+                      SelectedItem="{Binding SelectedUpgradeCat, Mode=TwoWay}"
+                      Width="160" Height="36"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Steps list -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <ItemsControl ItemsSource="{Binding FilteredUpgrades}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                    <StackPanel>
+
+                      <!-- Row 1: Name + ID + Delete -->
+                      <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*"/>
+                          <ColumnDefinition Width="8"/>
+                          <ColumnDefinition Width="150"/>
+                          <ColumnDefinition Width="8"/>
+                          <ColumnDefinition Width="32"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                          <TextBlock Style="{StaticResource FieldLbl}" Text="步驟名稱"/>
+                          <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                          <TextBlock Style="{StaticResource FieldLbl}" Text="ID"/>
+                          <TextBox Text="{Binding Id, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <Button Grid.Column="4" Style="{StaticResource BtnDel}"
+                                Tag="{Binding}" Click="DeleteUpgradeStep_Click"
+                                VerticalAlignment="Bottom">🗑</Button>
+                      </Grid>
+
+                      <!-- Row 2: FromStage / ToStage / GoldCost -->
+                      <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <StackPanel Margin="0,0,8,0" Width="90">
+                          <TextBlock Style="{StaticResource FieldLbl}" Text="起始階段"/>
+                          <TextBox Text="{Binding FromStage, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,8,0" Width="90">
+                          <TextBlock Style="{StaticResource FieldLbl}" Text="目標階段"/>
+                          <TextBox Text="{Binding ToStage, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                        <StackPanel Width="90">
+                          <TextBlock Style="{StaticResource FieldLbl}" Text="金幣費用"/>
+                          <TextBox Text="{Binding GoldCost, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                        </StackPanel>
+                      </StackPanel>
+
+                      <!-- Requirements sub-list -->
+                      <Border Style="{StaticResource Sep}"/>
+                      <TextBlock Text="材料需求" FontSize="12" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+
+                      <ItemsControl ItemsSource="{Binding Requirements}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Grid Margin="0,0,0,4">
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="32"/>
+                              </Grid.ColumnDefinitions>
+                              <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource FieldLbl}" Text="材料"/>
+                                <ComboBox Height="36"
+                                          ItemsSource="{Binding MaterialList,
+                                            RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                          SelectedValuePath="Id"
+                                          SelectedValue="{Binding MaterialId, Mode=TwoWay}">
+                                  <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                      <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Icon}" Margin="0,0,6,0" FontSize="15"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                      </StackPanel>
+                                    </DataTemplate>
+                                  </ComboBox.ItemTemplate>
+                                </ComboBox>
+                              </StackPanel>
+                              <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource FieldLbl}" Text="數量"/>
+                                <TextBox Text="{Binding Amount, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                              </StackPanel>
+                              <Button Grid.Column="4" Style="{StaticResource BtnDel}"
+                                      Tag="{Binding}" Click="DeleteReq_Click"
+                                      VerticalAlignment="Bottom">🗑</Button>
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <Button Style="{StaticResource BtnGhost}" Margin="0,6,0,0"
+                              HorizontalAlignment="Left" Tag="{Binding}" Click="AddReq_Click">
+                        ＋ 需求材料
+                      </Button>
+
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button Style="{StaticResource BtnGhost}" Margin="0,4,0,4"
+                    HorizontalAlignment="Left" Click="AddUpgradeStep_Click">
+              ＋ 新增步驟
+            </Button>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+
+      <!-- ── Bottom bar: status / reload / save ── -->
+      <Grid Grid.Row="1" Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="8"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock x:Name="TxtStatus" Grid.Column="0"
+                   Foreground="{StaticResource TextMuted}"
+                   VerticalAlignment="Center" FontSize="12"
+                   TextTrimming="CharacterEllipsis"/>
+
+        <Button x:Name="BtnReload" Grid.Column="1"
+                Style="{StaticResource BtnGhost}" Click="BtnReload_Click">
+          <TextBlock>↺ 重新載入</TextBlock>
+        </Button>
+
+        <Button x:Name="BtnSave" Grid.Column="3"
+                Style="{StaticResource BtnPrimary}" Click="BtnSave_Click">
+          <TextBlock>💾 儲存全部</TextBlock>
+        </Button>
+
+      </Grid>
+    </Grid>
+  </Grid>
+</UserControl>

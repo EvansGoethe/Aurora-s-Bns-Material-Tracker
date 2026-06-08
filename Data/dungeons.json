@@ -1,0 +1,66 @@
+{
+  "dungeons": [
+    {
+      "id": "ns_normal",
+      "name": "鐵血戰場（一般）",
+      "shortName": "鐵血一般",
+      "type": "daily",
+      "mode": "hero",
+      "difficulty": "normal",
+      "dailyLimit": 5,
+      "weeklyLimit": null,
+      "estimatedMinutes": 8,
+      "drops": [
+        { "materialId": "sacred_oil",  "chance": 0.4, "min": 1, "max": 2 },
+        { "materialId": "moonstone",   "chance": 0.8, "min": 1, "max": 3 }
+      ]
+    },
+    {
+      "id": "ns_skilled",
+      "name": "鐵血戰場（熟練）",
+      "shortName": "鐵血熟練",
+      "type": "daily",
+      "mode": "hero",
+      "difficulty": "skilled",
+      "dailyLimit": 3,
+      "weeklyLimit": null,
+      "estimatedMinutes": 15,
+      "drops": [
+        { "materialId": "sacred_oil",    "chance": 0.8, "min": 1, "max": 3 },
+        { "materialId": "moonstone",     "chance": 1.0, "min": 2, "max": 5 },
+        { "materialId": "upgrade_stone", "chance": 0.5, "min": 1, "max": 2 }
+      ]
+    },
+    {
+      "id": "td_demon3",
+      "name": "驚雷地宮（封魔3段）",
+      "shortName": "驚雷封3",
+      "type": "weekly",
+      "mode": "demon",
+      "difficulty": "3",
+      "dailyLimit": null,
+      "weeklyLimit": 3,
+      "estimatedMinutes": 20,
+      "drops": [
+        { "materialId": "upgrade_stone", "chance": 1.0, "min": 2, "max": 4 },
+        { "materialId": "soul_crystal",  "chance": 0.6, "min": 1, "max": 2 }
+      ]
+    },
+    {
+      "id": "bt_demon7",
+      "name": "天界試練（封魔7段）",
+      "shortName": "天試封7",
+      "type": "weekly",
+      "mode": "demon",
+      "difficulty": "7",
+      "dailyLimit": null,
+      "weeklyLimit": 1,
+      "estimatedMinutes": 45,
+      "drops": [
+        { "materialId": "soul_crystal",  "chance": 1.0, "min": 5,  "max": 10 },
+        { "materialId": "sacred_oil",    "chance": 1.0, "min": 3,  "max": 5  },
+        { "materialId": "upgrade_stone", "chance": 1.0, "min": 5,  "max": 8  }
+      ]
+    }
+  ]
+}

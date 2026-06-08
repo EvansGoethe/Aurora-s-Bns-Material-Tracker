@@ -1,0 +1,333 @@
+<UserControl x:Class="BnsMaterialTracker.Views.CalculatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Grid Background="{StaticResource BgApp}">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="260"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- ── 左側：升級步驟清單 ─────────────────────────── -->
+    <Border Grid.Column="0" Background="{StaticResource BgSidebar}">
+      <DockPanel>
+
+        <Border DockPanel.Dock="Top" Padding="14,14,14,8">
+          <TextBlock x:Name="TxtTitle" Text="材料計算器"
+                     FontSize="16" FontWeight="Bold"/>
+        </Border>
+
+        <!-- 儲存為目標 -->
+        <Border DockPanel.Dock="Bottom" Padding="10,8">
+          <StackPanel>
+            <TextBox x:Name="TxtGoalName" Margin="0,0,0,6" Height="34"/>
+            <Button x:Name="BtnSaveGoal" Style="{StaticResource BtnPrimary}"
+                    Click="BtnSaveGoal_Click">
+              <TextBlock x:Name="TxtSaveGoal" Text="儲存為目標"/>
+            </Button>
+          </StackPanel>
+        </Border>
+
+        <ScrollViewer DockPanel.Dock="Top">
+          <StackPanel Margin="8,0,8,4">
+
+            <!-- ▸ 武器升級 -->
+            <Expander x:Name="ExpWeapon" IsExpanded="True">
+              <Expander.Header>
+                <TextBlock x:Name="TxtWeaponLabel" Text="⚔️ 武器升級"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="WeaponList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 首飾升級（含手鐲/項鍊/腰帶/護拳/耳環） -->
+            <Expander x:Name="ExpAccessory" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtAccLabel" Text="💍 首飾升級"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <StackPanel Margin="4,2,0,4">
+                <TextBlock x:Name="TxtBracelet" Text="手鐲" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,4,0,2"/>
+                <ItemsControl x:Name="BraceletList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtNecklace" Text="項鍊" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="NecklaceList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtBelt" Text="腰帶" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="BeltList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtGloves" Text="護拳" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="GlovesList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtEarring" Text="耳環" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="EarringList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Expander>
+
+            <!-- ▸ 秘功牌 -->
+            <Expander x:Name="ExpSecretToken" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtSecretToken" Text="🎴 秘功牌"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="SecretTokenList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 神功牌 -->
+            <Expander x:Name="ExpDivineToken" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtDivineToken" Text="🃏 神功牌"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="DivineTokenList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 魂 -->
+            <Expander x:Name="ExpSoul" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtSoul" Text="👻 魂"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="SoulList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 靈 -->
+            <Expander x:Name="ExpSpirit" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtSpirit" Text="✨ 靈"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="SpiritList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 守護石 -->
+            <Expander x:Name="ExpGuardianStone" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtGuardianStone" Text="🛡️ 守護石"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="GuardianStoneList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 星 -->
+            <Expander x:Name="ExpStar" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtStar" Text="⭐ 星"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="StarList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 內功釧 -->
+            <Expander x:Name="ExpInnerBracelet" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtInnerBracelet" Text="🔵 內功釧"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="InnerBraceletList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+            <!-- ▸ 外功釧 -->
+            <Expander x:Name="ExpOuterBracelet" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtOuterBracelet" Text="🔴 外功釧"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <ItemsControl x:Name="OuterBraceletList" Margin="4,2,0,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                              Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <!-- ── 右側：計算結果 ───────────────────────────────── -->
+    <ScrollViewer Grid.Column="1" Padding="20">
+      <StackPanel>
+
+        <TextBlock x:Name="TxtSelectHint" Text="請在左側選擇升級步驟"
+                   Foreground="{StaticResource TextMuted}" FontSize="14"
+                   HorizontalAlignment="Center" Margin="0,40"/>
+
+        <!-- 所需材料總計 -->
+        <Border x:Name="CardRequired" Style="{StaticResource Card}"
+                Visibility="Collapsed">
+          <StackPanel>
+            <Grid Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="TxtTotalRequired" Text="所需材料總計"
+                         FontSize="15" FontWeight="SemiBold"/>
+              <TextBlock x:Name="TxtGoldCost" Grid.Column="1"
+                         Foreground="{StaticResource AccentYellow}"/>
+            </Grid>
+            <ItemsControl x:Name="RequiredList">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="28"/>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="16"/>
+                      <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="16"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="{Binding HaveLabel}"
+                               Foreground="{StaticResource TextMuted}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text=" / "
+                               Foreground="{StaticResource TextMuted}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="4" Text="{Binding NeedLabel}"
+                               Foreground="{Binding SuffColor}"
+                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- 不足材料 & 副本建議 -->
+        <Border x:Name="CardShortfall" Style="{StaticResource Card}"
+                Visibility="Collapsed">
+          <StackPanel>
+            <TextBlock x:Name="TxtShortfalls" Text="不足材料 &amp; 副本建議"
+                       FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10"/>
+            <TextBlock x:Name="TxtSufficient" Text="✓ 材料已足夠！"
+                       Foreground="{StaticResource AccentGreen}"
+                       Visibility="Collapsed"/>
+            <ItemsControl x:Name="ShortfallList">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="0,4">
+                    <TextBlock Text="{Binding MatLine}"
+                               Foreground="{StaticResource AccentRed}"/>
+                    <ItemsControl ItemsSource="{Binding Runs}" Margin="12,2,0,0">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding}" FontSize="12"
+                                     Foreground="{StaticResource TextSecondary}"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{Binding NoSource}" FontSize="12"
+                               Foreground="{StaticResource TextMuted}"
+                               Visibility="{Binding NoSourceVis}"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</UserControl>

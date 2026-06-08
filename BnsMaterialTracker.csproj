@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>洛洛劍靈材料追蹤器</AssemblyName>
+    <RootNamespace>BnsMaterialTracker</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>x64</Platforms>
+    <ApplicationIcon>ABnS_.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- Copy Data JSON files next to the exe -->
+  <ItemGroup>
+    <Content Include="Data\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- Embed PNG as WPF resource (for Window.Icon) -->
+  <ItemGroup>
+    <Resource Include="ABnS_.png"/>
+  </ItemGroup>
+
+</Project>
