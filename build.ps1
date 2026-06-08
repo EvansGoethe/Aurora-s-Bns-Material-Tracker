@@ -1,6 +1,13 @@
 ﻿# Aurora's BnS Material Tracker — Build Script
 # Publishes the app, builds the installer, zips the portable version,
 # and creates/updates a GitHub Release with both files.
+#
+# Usage:
+#   .\build.ps1                        # auto-generate release notes from git
+#   .\build.ps1 -Notes "修正 X，新增 Y" # custom release description
+param(
+    [string]$Notes = ""
+)
 
 $Root    = $PSScriptRoot
 $ExeName = "Aurora's BnS Material Tracker"   # user-facing filename (without .exe)
@@ -104,13 +111,22 @@ if (-not (Test-Path $gh)) {
 & $gh release delete $Tag --repo $Repo --yes 2>$null
 & $gh api "repos/$Repo/git/refs/tags/$Tag" --method DELETE 2>$null
 
-# Create release with auto-generated notes
-& $gh release create $Tag `
-    --repo  $Repo `
-    --title "Aurora's BnS Material Tracker $Tag" `
-    --generate-notes `
-    $SetupFile `
-    $ZipPath
+# Create release — use custom notes if provided, otherwise auto-generate
+if ($Notes) {
+    & $gh release create $Tag `
+        --repo  $Repo `
+        --title "Aurora's BnS Material Tracker $Tag" `
+        --notes $Notes `
+        $SetupFile `
+        $ZipPath
+} else {
+    & $gh release create $Tag `
+        --repo  $Repo `
+        --title "Aurora's BnS Material Tracker $Tag" `
+        --generate-notes `
+        $SetupFile `
+        $ZipPath
+}
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
