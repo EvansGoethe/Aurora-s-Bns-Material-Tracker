@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
@@ -131,30 +132,65 @@ namespace BnsMaterialTracker.Views
             {
                 var bmp = new BitmapImage();
                 bmp.BeginInit();
-                bmp.UriSource        = new Uri(dlg.FileName);
-                bmp.CacheOption      = BitmapCacheOption.OnLoad;
+                bmp.UriSource   = new Uri(dlg.FileName);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
                 bmp.EndInit();
                 bmp.Freeze();
-
-                _screenshot = bmp;
-                ImgScreenshot.Source = bmp;
-
-                // Size the container to exact pixel dimensions.
-                // The Viewbox then scales it uniformly to fit the panel.
-                // This makes Canvas coordinates 1:1 with image pixels — no conversion needed.
-                ImageContainer.Width  = bmp.PixelWidth;
-                ImageContainer.Height = bmp.PixelHeight;
-
-                VbScreenshot.Visibility    = Visibility.Visible;
-                TxtNoScreenshot.Visibility = Visibility.Collapsed;
-
-                DrawOverlay();
-                UpdateScanButton();
+                LoadScreenshot(bmp);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void BtnPaste_Click(object sender, RoutedEventArgs e)
+            => PasteFromClipboard();
+
+        private void BagScanView_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.V &&
+                (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                PasteFromClipboard();
+                e.Handled = true;
+            }
+        }
+
+        private void PasteFromClipboard()
+        {
+            if (!Clipboard.ContainsImage())
+            {
+                TxtScanStatus.Text = "剪貼簿中沒有圖片";
+                return;
+            }
+            var bmp = Clipboard.GetImage();
+            if (bmp == null)
+            {
+                TxtScanStatus.Text = "無法讀取剪貼簿圖片";
+                return;
+            }
+            LoadScreenshot(bmp);
+            TxtScanStatus.Text = "";
+        }
+
+        private void LoadScreenshot(BitmapSource bmp)
+        {
+            if (!bmp.IsFrozen) bmp.Freeze();
+            _screenshot          = bmp;
+            ImgScreenshot.Source = bmp;
+
+            // Size the container to exact pixel dimensions.
+            // The Viewbox then scales it uniformly to fit the panel.
+            // This makes Canvas coordinates 1:1 with image pixels — no conversion needed.
+            ImageContainer.Width  = bmp.PixelWidth;
+            ImageContainer.Height = bmp.PixelHeight;
+
+            VbScreenshot.Visibility    = Visibility.Visible;
+            TxtNoScreenshot.Visibility = Visibility.Collapsed;
+
+            DrawOverlay();
+            UpdateScanButton();
         }
 
         // ── Click on screenshot ────────────────────────────────────────

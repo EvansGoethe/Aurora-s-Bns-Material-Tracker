@@ -1,15 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using BnsMaterialTracker.Models;
 using BnsMaterialTracker.Services;
 using BnsMaterialTracker.ViewModels;
+using Microsoft.Win32;
 
 namespace BnsMaterialTracker.Views
 {
@@ -496,6 +501,219 @@ namespace BnsMaterialTracker.Views
             LoadAllData();
             FilterUpgrades();
             TxtStatus.Text = "↺ 已重新載入";
+        }
+
+        // ── Dungeon import from screenshot ──────────────────────────────────
+
+        private DungeonScanResult? _dungScanResult;
+
+        private void ShowDungImport(bool show)
+        {
+            DungImportOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (!show) _dungScanResult = null;
+        }
+
+        private void BtnFromScreenshot_Click(object sender, RoutedEventArgs e)
+        {
+            DungResultPanel.Visibility  = Visibility.Collapsed;
+            TxtDungStatus.Text          = "請選擇或貼上副本資訊頁的截圖";
+            BtnDungConfirm.IsEnabled    = false;
+            _dungScanResult             = null;
+            ShowDungImport(true);
+        }
+
+        private void BtnDungCancel_Click(object sender, RoutedEventArgs e)
+            => ShowDungImport(false);
+
+        private void BtnDungImport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title  = "選擇副本截圖",
+                Filter = "Image files|*.png;*.jpg;*.jpeg;*.bmp|All files|*.*",
+            };
+            if (dlg.ShowDialog() != true) return;
+            try
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource   = new Uri(dlg.FileName);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                _ = RunDungeonScanAsync(bmp);
+            }
+            catch (Exception ex) { TxtDungStatus.Text = "❌ " + ex.Message; }
+        }
+
+        private void BtnDungPaste_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Clipboard.ContainsImage()) { TxtDungStatus.Text = "剪貼簿中沒有圖片"; return; }
+            var bmp = Clipboard.GetImage();
+            if (bmp == null) { TxtDungStatus.Text = "無法讀取剪貼簿圖片"; return; }
+            _ = RunDungeonScanAsync(bmp);
+        }
+
+        private async Task RunDungeonScanAsync(BitmapSource screenshot)
+        {
+            TxtDungStatus.Text         = "🔍 辨識中...";
+            DungResultPanel.Visibility = Visibility.Collapsed;
+            BtnDungConfirm.IsEnabled   = false;
+
+            try { _dungScanResult = await DungeonScanService.ScanAsync(screenshot); }
+            catch (Exception ex) { TxtDungStatus.Text = "❌ " + ex.Message; return; }
+
+            if (_dungScanResult == null)
+            {
+                TxtDungStatus.Text = "❌ OCR 引擎不可用";
+                return;
+            }
+
+            TxtDungName.Text = _dungScanResult.DungeonName;
+
+            var entries = BuildPreviewEntries(_dungScanResult);
+            DungEntryList.ItemsSource = entries;
+
+            int total = _dungScanResult.Sections.Sum(s => s.ItemNames.Count);
+            int unmatched = CountUnmatched(_dungScanResult);
+
+            TxtDungStatus.Text = $"✅ 偵測完成 — 找到 {total} 個掉落名稱";
+
+            if (unmatched > 0)
+            {
+                TxtDungUnmatched.Text       = $"⚠️ {unmatched} 個掉落名稱未能匹配現有材料，匯入後 materialId 欄位留空，請手動補全";
+                TxtDungUnmatched.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TxtDungUnmatched.Visibility = Visibility.Collapsed;
+            }
+
+            DungResultPanel.Visibility = Visibility.Visible;
+            BtnDungConfirm.IsEnabled   = entries.Count > 0;
+        }
+
+        private List<string> BuildPreviewEntries(DungeonScanResult result)
+        {
+            var entries  = new List<string>();
+            int common   = result.Sections.FirstOrDefault(s => s.Difficulty == "common")?.ItemNames.Count ?? 0;
+
+            if (result.Mode == "hero")
+            {
+                foreach (var (diff, label) in new[] { ("easy","入門"), ("normal","一般"), ("skilled","熟練") })
+                {
+                    var sec   = result.Sections.FirstOrDefault(s => s.Difficulty == diff);
+                    int count = (sec?.ItemNames.Count ?? 0) + common;
+                    if (sec != null || common > 0)
+                        entries.Add($"  • {result.DungeonName}（{label}） — {count} 個掉落");
+                }
+            }
+            else
+            {
+                for (int i = 1; i <= 7; i++)
+                {
+                    var sec = result.Sections.FirstOrDefault(s => s.Difficulty == i.ToString());
+                    if (sec == null) continue;
+                    entries.Add($"  • {result.DungeonName}（封魔{i}段） — {sec.ItemNames.Count + common} 個掉落");
+                }
+            }
+
+            if (entries.Count == 0 && common > 0)
+                entries.Add($"  • {result.DungeonName} — {common} 個掉落");
+
+            return entries;
+        }
+
+        private int CountUnmatched(DungeonScanResult result)
+            => result.Sections
+                     .SelectMany(s => s.ItemNames)
+                     .Distinct()
+                     .Count(name => string.IsNullOrEmpty(MatchMaterialId(name)));
+
+        private void BtnDungConfirm_Click(object sender, RoutedEventArgs e)
+        {
+            if (_dungScanResult == null) return;
+
+            string baseName = TxtDungName.Text.Trim();
+            if (string.IsNullOrEmpty(baseName)) baseName = _dungScanResult.DungeonName;
+
+            var common     = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == "common");
+            var commonItems = common?.ItemNames ?? new List<string>();
+            int added      = 0;
+
+            if (_dungScanResult.Mode == "hero")
+            {
+                foreach (var (diff, label) in new[] { ("easy","入門"), ("normal","一般"), ("skilled","熟練") })
+                {
+                    var sec = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == diff);
+                    if (sec == null && commonItems.Count == 0) continue;
+                    var row = BuildDungeonRow(baseName, label, "hero", diff, commonItems, sec?.ItemNames ?? new List<string>(), added);
+                    DungeonList.Add(row);
+                    added++;
+                }
+            }
+            else
+            {
+                for (int i = 1; i <= 7; i++)
+                {
+                    var sec = _dungScanResult.Sections.FirstOrDefault(s => s.Difficulty == i.ToString());
+                    if (sec == null) continue;
+                    var row = BuildDungeonRow(baseName, $"封魔{i}段", "demon", i.ToString(), commonItems, sec.ItemNames, added);
+                    DungeonList.Add(row);
+                    added++;
+                }
+            }
+
+            TxtStatus.Text = $"✓ 從截圖匯入 {added} 個副本條目，請確認掉落後儲存";
+            ShowDungImport(false);
+            TabDungeons.IsChecked = true;
+            ShowPanel("dungeons");
+        }
+
+        private DungeonRow BuildDungeonRow(
+            string baseName, string diffLabel, string mode, string diff,
+            List<string> commonItems, List<string> diffItems, int index)
+        {
+            string fullName = mode == "hero" || diffItems.Count > 0
+                ? $"{baseName}（{diffLabel}）"
+                : baseName;
+
+            var row = new DungeonRow
+            {
+                Id               = $"{SanitizeId(baseName)}_{diff}",
+                Name             = fullName,
+                ShortName        = "",
+                Mode             = mode,
+                Difficulty       = diff,
+                Type             = "daily",
+                DailyLimit       = 5,
+                EstimatedMinutes = 20,
+            };
+
+            foreach (var item in commonItems.Concat(diffItems))
+                row.Drops.Add(new DropRow
+                {
+                    MaterialId = MatchMaterialId(item),
+                    Chance     = 1.0,
+                    Min        = 1,
+                    Max        = 1,
+                    Parent     = row,
+                });
+
+            return row;
+        }
+
+        private static string SanitizeId(string name)
+            => Regex.Replace(name, @"[^\w一-鿿]", "_").ToLowerInvariant();
+
+        private string MatchMaterialId(string itemName)
+        {
+            var exact = MaterialList.FirstOrDefault(m => m.Name == itemName);
+            if (exact != null) return exact.Id;
+
+            var partial = MaterialList.FirstOrDefault(m =>
+                m.Name.Contains(itemName) || itemName.Contains(m.Name));
+            return partial?.Id ?? "";
         }
     }
 }

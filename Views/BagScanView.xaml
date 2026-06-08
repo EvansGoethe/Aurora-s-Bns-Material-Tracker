@@ -1,6 +1,7 @@
 <UserControl x:Class="BnsMaterialTracker.Views.BagScanView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             PreviewKeyDown="BagScanView_PreviewKeyDown">
 
   <Grid Background="{StaticResource BgApp}">
 
@@ -91,11 +92,15 @@
             <TextBlock x:Name="TxtTitle" Text="截圖辨識"
                        FontSize="18" FontWeight="Bold" Margin="0,0,0,14"/>
 
-            <!-- Import button -->
+            <!-- Import / Paste buttons -->
             <Button x:Name="BtnImport" Content="📂 匯入截圖"
                     Style="{StaticResource BtnPrimary}"
-                    Height="38" Margin="0,0,0,10"
+                    Height="38" Margin="0,0,0,6"
                     Click="BtnImport_Click"/>
+            <Button x:Name="BtnPaste" Content="📋 貼上截圖 (Ctrl+V)"
+                    Style="{StaticResource BtnGhost}"
+                    Height="36" Margin="0,0,0,10"
+                    Click="BtnPaste_Click"/>
 
             <!-- Hint text -->
             <TextBlock x:Name="TxtClickHint"
