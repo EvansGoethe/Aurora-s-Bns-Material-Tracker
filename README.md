@@ -1,4 +1,4 @@
-# Aurora's BnS Material Tracker — 洛洛劍靈材料追蹤器
+# 洛洛劍靈材料追蹤器 | Aurora's BnS Material Tracker
 
 A desktop tool for **Blade & Soul TW Server** to track dungeon runs, manage materials, and plan upgrades.  
 專為**劍靈台服**設計的桌面工具，協助追蹤副本進度、管理材料倉庫與規劃升級路線。
