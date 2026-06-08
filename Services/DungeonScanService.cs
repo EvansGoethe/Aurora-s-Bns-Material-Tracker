@@ -101,10 +101,13 @@ namespace BnsMaterialTracker.Services
             found.Sort((a, b) => a.idx.CompareTo(b.idx));
 
             // ── Dungeon name ────────────────────────────────────────────────
+            // The dungeon name is the first short CJK sequence, but OCR merges it
+            // with the description that follows (e.g. "火田民村由於雷雲聚集之…").
+            // We detect where the description begins using common openers and cut there.
             int firstHdrPos = found.Count > 0 ? found[0].idx : compact.Length;
             string preamble = compact[..Math.Min(firstHdrPos, compact.Length)];
-            var nameM = Regex.Match(preamble, @"[一-鿿㐀-䶿]{2,10}");
-            result.DungeonName = nameM.Success ? nameM.Value : "";
+            var cjkM = Regex.Match(preamble, @"[一-鿿㐀-䶿]{2,}");
+            result.DungeonName = cjkM.Success ? TrimAtDescStart(cjkM.Value) : "";
 
             // ── Party size ──────────────────────────────────────────────────
             var psm = Regex.Match(rawText, @"(\d+)人");
@@ -139,6 +142,20 @@ namespace BnsMaterialTracker.Services
             }
 
             return result;
+        }
+
+        // Common phrase openers that start the dungeon description (not part of the name)
+        private static readonly string[] DescStarters =
+            { "由於", "由于", "自從", "自从", "以上", "入場", "為了", "可以統", "也可以" };
+
+        private static string TrimAtDescStart(string cjk)
+        {
+            foreach (var ph in DescStarters)
+            {
+                int i = cjk.IndexOf(ph, StringComparison.Ordinal);
+                if (i >= 2 && i <= 8) return cjk[..i];   // name is 2-8 chars max
+            }
+            return cjk.Length <= 6 ? cjk : cjk[..5];
         }
 
         private static bool IsNoiseItem(string t)

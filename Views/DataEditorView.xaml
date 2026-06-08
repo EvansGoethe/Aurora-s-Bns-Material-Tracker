@@ -489,9 +489,10 @@
       <Border Background="{StaticResource BgCard}"
               BorderBrush="{StaticResource BorderColor}"
               BorderThickness="1" CornerRadius="8"
-              Padding="24" Width="480"
+              Width="500" MaxHeight="680"
               VerticalAlignment="Center" HorizontalAlignment="Center">
-        <StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
 
           <TextBlock Text="從截圖匯入副本"
                      FontSize="16" FontWeight="SemiBold" Margin="0,0,0,16"/>
@@ -518,14 +519,14 @@
                     BorderThickness="0,0,0,1" Margin="0,0,0,12"/>
 
             <!-- Dungeon name (editable) -->
-            <TextBlock Text="副本名稱" FontSize="11"
+            <TextBlock Text="副本名稱（OCR 辨識結果，請確認是否正確）" FontSize="11"
                        Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4"/>
             <TextBox x:Name="TxtDungName" Height="34" FontSize="13" Margin="0,0,0,12"/>
 
             <!-- Entries preview -->
-            <TextBlock Text="將新增以下條目："
-                       FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-            <ItemsControl x:Name="DungEntryList" Margin="0,0,0,4">
+            <TextBlock Text="將新增以下條目：" FontSize="11"
+                       Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+            <ItemsControl x:Name="DungEntryList" Margin="0,0,0,8">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <TextBlock Text="{Binding}" FontSize="12"
@@ -534,9 +535,49 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock x:Name="TxtDungUnmatched"
-                       FontSize="11" Foreground="Orange"
-                       Margin="0,4,0,0" Visibility="Collapsed" TextWrapping="Wrap"/>
+            <!-- ── Quick material creation ── -->
+            <Border BorderBrush="{StaticResource BgInput}"
+                    BorderThickness="0,0,0,1" Margin="0,4,0,10"/>
+
+            <TextBlock Text="📝 快速建立新材料" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBlock Text="在截圖中看到但尚未登記的材料，請輸入名稱按 ＋ 新增（會即時計入上方匹配數）："
+                       FontSize="11" Foreground="{StaticResource TextMuted}"
+                       TextWrapping="Wrap" Margin="0,0,0,6"/>
+
+            <Grid Margin="0,0,0,4">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="6"/>
+                <ColumnDefinition Width="40"/>
+              </Grid.ColumnDefinitions>
+              <TextBox x:Name="TxtNewMatName" Grid.Column="0" Height="32" FontSize="12"
+                       VerticalContentAlignment="Center"
+                       KeyDown="TxtNewMatName_KeyDown"/>
+              <Button x:Name="BtnAddNewMat" Grid.Column="2" Content="＋"
+                      Style="{StaticResource BtnPrimary}" Height="32" Width="40"
+                      Click="BtnAddNewMat_Click"/>
+            </Grid>
+
+            <ItemsControl x:Name="PendingMatList" Margin="0,0,0,4">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="4"/>
+                      <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Name}"
+                               FontSize="12" VerticalAlignment="Center"
+                               Foreground="{StaticResource AccentColor}"/>
+                    <Button Grid.Column="2" Content="✕" Width="24" Height="24"
+                            FontSize="10" Style="{StaticResource BtnGhost}"
+                            Foreground="{StaticResource TextMuted}"
+                            Tag="{Binding}" Click="BtnRemovePendingMat_Click"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- Raw OCR text (debug, collapsible) -->
             <Expander x:Name="ExpanderOcr" Header="OCR 原始文字（debug）"
@@ -551,7 +592,7 @@
           </StackPanel>
 
           <!-- Confirm / Cancel -->
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,4">
             <Button x:Name="BtnDungCancel" Content="取消" Width="80" Height="34"
                     Style="{StaticResource BtnGhost}" Margin="0,0,8,0"
                     Click="BtnDungCancel_Click"/>
@@ -561,6 +602,7 @@
           </StackPanel>
 
         </StackPanel>
+        </ScrollViewer>
       </Border>
     </Grid>
 

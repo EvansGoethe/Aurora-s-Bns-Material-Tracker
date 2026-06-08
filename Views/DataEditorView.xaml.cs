@@ -507,6 +507,9 @@ namespace BnsMaterialTracker.Views
 
         private DungeonScanResult? _dungScanResult;
 
+        // Materials added during this import session (removed on cancel, kept on confirm)
+        private readonly List<MaterialRow> _pendingNewMaterials = new();
+
         private void ShowDungImport(bool show)
         {
             DungImportOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
@@ -515,6 +518,10 @@ namespace BnsMaterialTracker.Views
 
         private void BtnFromScreenshot_Click(object sender, RoutedEventArgs e)
         {
+            // Remove any materials added in a previous (cancelled) import attempt
+            foreach (var m in _pendingNewMaterials) MaterialList.Remove(m);
+            _pendingNewMaterials.Clear();
+
             DungResultPanel.Visibility  = Visibility.Collapsed;
             TxtDungStatus.Text          = "請選擇或貼上副本資訊頁的截圖";
             BtnDungConfirm.IsEnabled    = false;
@@ -523,7 +530,63 @@ namespace BnsMaterialTracker.Views
         }
 
         private void BtnDungCancel_Click(object sender, RoutedEventArgs e)
-            => ShowDungImport(false);
+        {
+            // Roll back any materials created during this import session
+            foreach (var m in _pendingNewMaterials) MaterialList.Remove(m);
+            _pendingNewMaterials.Clear();
+            ShowDungImport(false);
+        }
+
+        // ── Quick material creation inside the import overlay ───────────────
+
+        private void TxtNewMatName_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter) AddPendingMaterial();
+        }
+
+        private void BtnAddNewMat_Click(object sender, RoutedEventArgs e)
+            => AddPendingMaterial();
+
+        private void BtnRemovePendingMat_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.Tag is MaterialRow mat)
+            {
+                MaterialList.Remove(mat);
+                _pendingNewMaterials.Remove(mat);
+                RefreshPendingMatList();
+                RefreshDungEntryList();
+            }
+        }
+
+        private void AddPendingMaterial()
+        {
+            string name = TxtNewMatName.Text.Trim();
+            if (string.IsNullOrEmpty(name)) return;
+
+            // Avoid duplicates
+            if (MaterialList.Any(m => m.Name == name)) return;
+
+            string id = SanitizeId(name) + "_" + MaterialList.Count;
+            var mat = new MaterialRow { Id = id, Name = name, Icon = "📦", Category = "weapon" };
+            MaterialList.Add(mat);
+            _pendingNewMaterials.Add(mat);
+
+            TxtNewMatName.Text = "";
+            RefreshPendingMatList();
+            RefreshDungEntryList();  // update matched-material counts
+        }
+
+        private void RefreshPendingMatList()
+        {
+            PendingMatList.ItemsSource = null;
+            PendingMatList.ItemsSource = _pendingNewMaterials.ToList();
+        }
+
+        private void RefreshDungEntryList()
+        {
+            if (_dungScanResult == null) return;
+            DungEntryList.ItemsSource = BuildPreviewEntries(_dungScanResult);
+        }
 
         private void BtnDungImport_Click(object sender, RoutedEventArgs e)
         {
@@ -588,8 +651,6 @@ namespace BnsMaterialTracker.Views
             TxtDungStatus.Text = entries.Count > 0
                 ? $"✅ 偵測完成 — 找到 {entries.Count} 個難度段落，共匹配 {totalMatched} 個材料"
                 : "⚠️ 未能識別任何難度段落，請確認截圖包含完整副本資訊頁";
-
-            TxtDungUnmatched.Visibility = Visibility.Collapsed;
 
             DungResultPanel.Visibility = Visibility.Visible;
             BtnDungConfirm.IsEnabled   = entries.Count > 0;
@@ -667,7 +728,12 @@ namespace BnsMaterialTracker.Views
                 }
             }
 
-            TxtStatus.Text = $"✓ 從截圖匯入 {added} 個副本條目，請確認掉落後儲存";
+            int newMats = _pendingNewMaterials.Count;
+            _pendingNewMaterials.Clear();  // keep in MaterialList, just stop tracking
+
+            TxtStatus.Text = newMats > 0
+                ? $"✓ 從截圖匯入 {added} 個副本、{newMats} 個新材料，請確認掉落後儲存"
+                : $"✓ 從截圖匯入 {added} 個副本條目，請確認掉落後儲存";
             ShowDungImport(false);
             TabDungeons.IsChecked = true;
             ShowPanel("dungeons");
