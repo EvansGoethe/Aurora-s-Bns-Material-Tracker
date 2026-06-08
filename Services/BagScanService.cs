@@ -214,15 +214,19 @@ namespace BnsMaterialTracker.Services
             int cellCenterY = matchY + TemplateSize / 2;          // matchY+20
             int cellBottomY = cellCenterY + cellSize / 2;         // matchY+48
             int cellLeftX   = matchX + TemplateSize / 2 - cellSize / 2; // matchX-8
-            int numH        = Math.Max(14, cellSize * 22 / 100);  // ~12 px for cell=56
 
-            // Three crop attempts: all anchored at the actual cell bottom
+            // BnS quantity numbers occupy roughly the bottom 35-40% of the cell.
+            // For cell=56: 56*40/100 = 22px.  Add generous padding so digits aren't cut.
+            int numH = Math.Max(24, cellSize * 40 / 100);  // ≥24 px; ~22 px for cell=56 → use 24
+            int numW = Math.Max(48, cellSize * 75 / 100);  // wide enough for 4-digit numbers
+
+            // Three crop attempts: anchored at the actual cell bottom, increasing height
             var candidates = new[]
             {
                 // (absX, absY, w, h) — all absolute image coordinates
-                (cellLeftX, cellBottomY - numH,     cellSize * 3 / 5, numH + 2),
-                (cellLeftX, cellBottomY - numH - 4, cellSize * 2 / 3, numH + 6),
-                (cellLeftX, cellCenterY + 4,        cellSize * 2 / 3, cellBottomY - cellCenterY - 2),
+                (cellLeftX, cellBottomY - numH,      numW, numH + 4),   // primary
+                (cellLeftX, cellBottomY - numH - 6,  numW, numH + 10),  // start higher
+                (cellLeftX, cellCenterY,             numW, cellSize / 2 + 4), // whole lower half
             };
 
             foreach (var (ax, ay, aw, ah) in candidates)
