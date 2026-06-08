@@ -5,6 +5,13 @@ $Root    = $PSScriptRoot
 $ExeName = "Aurora's BnS Material Tracker"   # user-facing filename (without .exe)
 $ExeFile = "$ExeName.exe"                     # full filename with extension
 
+# Read version from csproj (single source of truth)
+[xml]$csproj  = Get-Content "$Root\BnsMaterialTracker.csproj"
+$Version = ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } |
+            Where-Object { $_ } | Select-Object -First 1)
+if (-not $Version) { $Version = "1.0.0" }
+Write-Host "Version: $Version" -ForegroundColor DarkCyan
+
 # ── 1. Kill any running instance ──────────────────────────────
 Write-Host "[1/3] Stopping any running instance..." -ForegroundColor Cyan
 Stop-Process -Name $ExeName -Force -ErrorAction SilentlyContinue
@@ -47,7 +54,7 @@ if (-not $iscc) {
 }
 
 New-Item -ItemType Directory -Force "$Root\installer_output" | Out-Null
-& $iscc "$Root\installer.iss"
+& $iscc /DAppVersion=$Version "$Root\installer.iss"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""

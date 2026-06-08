@@ -7,6 +7,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>Auroras BnS Material Tracker</AssemblyName>
     <RootNamespace>BnsMaterialTracker</RootNamespace>
+    <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>
     <ApplicationIcon>ABnS_.ico</ApplicationIcon>

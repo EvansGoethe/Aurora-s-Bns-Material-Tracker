@@ -1,5 +1,9 @@
 #define AppName "洛洛劍靈材料追蹤器"
-#define AppVersion "1.0.0"
+; AppVersion is passed in by build.ps1 via /DAppVersion=x.x.x
+; If building manually via Inno Setup IDE, fall back to "0.0.0"
+#ifndef AppVersion
+  #define AppVersion "0.0.0"
+#endif
 #define AppPublisher "EvansGoethe"
 #define AppURL "https://github.com/EvansGoethe/Aurora-s-Bns-Material-Tracker"
 #define AppExeName "Aurora's BnS Material Tracker.exe"
