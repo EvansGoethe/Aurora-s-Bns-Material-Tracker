@@ -200,9 +200,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="{Binding MatIcon}" FontSize="16"
                                VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Text="{Binding MatName}"
-                               VerticalAlignment="Center" Margin="4,0,0,0"
-                               FontSize="13" TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
+                      <TextBlock Text="{Binding MatName}"
+                                 FontSize="13" TextTrimming="CharacterEllipsis"/>
+                      <TextBlock Text="{Binding ScoreDisplay}"
+                                 FontSize="10" Foreground="{Binding ScoreColor}"/>
+                    </StackPanel>
                     <TextBlock Grid.Column="2" Text="{Binding QuantityDisplay}"
                                VerticalAlignment="Center" Margin="6,0,0,0"
                                FontSize="13" FontWeight="SemiBold"

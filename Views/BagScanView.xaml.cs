@@ -41,6 +41,7 @@ namespace BnsMaterialTracker.Views
             public string MatName       { get; set; } = "";
             public int    Quantity      { get; set; } = -1;
             public bool   Found         { get; set; } = false;
+            public double MatchScore    { get; set; } = 0;
 
             public string QuantityDisplay =>
                 Found && Quantity >= 0  ? Quantity.ToString("N0") :
@@ -51,6 +52,13 @@ namespace BnsMaterialTracker.Views
                 Found && Quantity >= 0 ? Brushes.LimeGreen :
                 Found                  ? Brushes.Orange :
                                          Brushes.Gray;
+
+            /// <summary>Shows the NCC match score, e.g. "98%".</summary>
+            public string ScoreDisplay  =>
+                Found ? $"({MatchScore:P0})" : "";
+            public Brush ScoreColor => MatchScore >= 0.90 ? Brushes.LimeGreen
+                                     : MatchScore >= 0.75 ? Brushes.Yellow
+                                     : Brushes.Orange;
         }
 
         // ── Init ───────────────────────────────────────────────────────
@@ -276,10 +284,11 @@ namespace BnsMaterialTracker.Views
                 // Display results
                 var rows = _lastResults.Select(r => new ResultRow
                 {
-                    MatIcon  = r.MatIcon,
-                    MatName  = r.MatName,
-                    Quantity = r.Quantity,
-                    Found    = r.Found,
+                    MatIcon    = r.MatIcon,
+                    MatName    = r.MatName,
+                    Quantity   = r.Quantity,
+                    Found      = r.Found,
+                    MatchScore = r.MatchScore,
                 }).ToList();
 
                 ResultList.ItemsSource      = rows;
@@ -290,6 +299,8 @@ namespace BnsMaterialTracker.Views
                 int foundCount = _lastResults.Count(r => r.Found && r.Quantity >= 0);
                 TxtScanStatus.Text  = $"✅ {foundCount} / {_lastResults.Count}";
                 BtnApply.IsEnabled  = foundCount > 0;
+
+                DrawScanOverlay();
             }
             catch (Exception ex)
             {
@@ -361,8 +372,56 @@ namespace BnsMaterialTracker.Views
             }
         }
 
+        /// <summary>
+        /// Draw cyan boxes where templates were FOUND during last scan.
+        /// Called after scan completes (in addition to the green registration boxes).
+        /// </summary>
+        private void DrawScanOverlay()
+        {
+            if (_screenshot == null || ImgScreenshot.ActualWidth <= 0) return;
+
+            int ts = BagScanService.TemplateSize;
+            foreach (var r in _lastResults)
+            {
+                if (!r.Found) continue;
+
+                var (dx, dy, dw, dh) = ImageToDisplay(
+                    ImgScreenshot, _screenshot,
+                    r.FoundX, r.FoundY, ts, ts);
+
+                // Cyan found box
+                var rect = new Rectangle
+                {
+                    Width           = dw,
+                    Height          = dh,
+                    Stroke          = Brushes.Cyan,
+                    StrokeThickness = 2,
+                    StrokeDashArray = new DoubleCollection { 3, 2 },
+                };
+                Canvas.SetLeft(rect, dx);
+                Canvas.SetTop(rect,  dy);
+                OverlayCanvas.Children.Add(rect);
+
+                // Score label
+                var lbl = new TextBlock
+                {
+                    Text       = $"{r.Quantity:N0} ({r.MatchScore:P0})",
+                    FontSize   = 9,
+                    Foreground = Brushes.Cyan,
+                    Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
+                };
+                if (r.Quantity < 0) lbl.Text = $"? ({r.MatchScore:P0})";
+                Canvas.SetLeft(lbl, dx);
+                Canvas.SetTop(lbl,  dy - 13);
+                OverlayCanvas.Children.Add(lbl);
+            }
+        }
+
         private void ImgScreenshot_SizeChanged(object sender, SizeChangedEventArgs e)
-            => DrawOverlay();
+        {
+            DrawOverlay();
+            DrawScanOverlay();
+        }
 
         // ── Coordinate helpers ─────────────────────────────────────────
 
