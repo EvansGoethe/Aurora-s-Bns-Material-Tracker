@@ -704,8 +704,11 @@ namespace BnsMaterialTracker.Views
 
             TxtDungName.Text = _dungScanResult.DungeonName;
 
-            // Show raw OCR text for debugging
-            TxtOcrRaw.Text         = _dungScanResult.RawOcrText;
+            // Show raw OCR text for debugging (append filter-debug path if available)
+            TxtOcrRaw.Text = string.IsNullOrEmpty(_dungScanResult.FilterDebugPath)
+                ? _dungScanResult.RawOcrText
+                : _dungScanResult.RawOcrText
+                  + "\n\n[色彩過濾圖已儲存：" + _dungScanResult.FilterDebugPath + "]";
             ExpanderOcr.Visibility = Visibility.Visible;
 
             // Show detected tokens that are NOT already in MaterialList

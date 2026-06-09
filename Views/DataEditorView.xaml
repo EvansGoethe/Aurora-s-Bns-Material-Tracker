@@ -584,14 +584,14 @@
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*"/>
                       <ColumnDefinition Width="4"/>
-                      <ColumnDefinition Width="24"/>
+                      <ColumnDefinition Width="36"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="{Binding Name}"
                                FontSize="12" VerticalAlignment="Center"
                                Foreground="{StaticResource AccentColor}"/>
-                    <Button Grid.Column="2" Content="✕" Width="24" Height="24"
-                            FontSize="10" Style="{StaticResource BtnGhost}"
-                            Foreground="{StaticResource TextMuted}"
+                    <Button Grid.Column="2" Content="✕" Width="32" Height="32"
+                            FontSize="14" Style="{StaticResource BtnGhost}"
+                            Foreground="{StaticResource AccentRed}"
                             Tag="{Binding}" Click="BtnRemovePendingMat_Click"/>
                   </Grid>
                 </DataTemplate>

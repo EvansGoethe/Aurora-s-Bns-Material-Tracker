@@ -26,6 +26,7 @@ namespace BnsMaterialTracker.Services
         public string               Mode           { get; set; } = "hero";  // "hero" | "demon"
         public List<DungeonSection> Sections       { get; set; } = new();
         public string               RawOcrText     { get; set; } = "";      // for debug display
+        public string               FilterDebugPath{ get; set; } = "";      // path to saved filter-debug image
         public List<string>         DetectedTokens { get; set; } = new();   // item-color word tokens
     }
 
@@ -135,6 +136,20 @@ namespace BnsMaterialTracker.Services
 
             // Filter image → keep only colored (item-name) pixels, rest → white
             var filteredBmp  = IsolateItemText(screenshot);
+
+            // Save the filtered bitmap for debug inspection
+            try
+            {
+                string debugPath = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(), "bns_filter_debug.png");
+                var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(filteredBmp));
+                using var fs = System.IO.File.Create(debugPath);
+                enc.Save(fs);
+                result.FilterDebugPath = debugPath;
+            }
+            catch { /* debug save is best-effort */ }
+
             var filteredSoft = await ToBitmapAsync(filteredBmp);
             if (filteredSoft == null) return;
 
@@ -212,9 +227,11 @@ namespace BnsMaterialTracker.Services
 
                 // Colored text:  non-trivial saturation and not too dark
                 //   BnS orange/gold item names: R=255 G≈165 B≈0 → bri=1.0, sat=1.0 → keep
-                // White / near-white text: sat ≈ 0 → excluded (no upper brightness limit needed)
-                // Dark background: bri < 0.28 → excluded → becomes white background
-                bool isColored = sat > 0.22f && bri > 0.28f;
+                //   BnS light-gold:  R=255 G=230 B=160 → sat≈0.37 → keep
+                // White / near-white text: sat ≈ 0-0.05 → excluded
+                // Dark background: bri < 0.20 → excluded → becomes white background
+                // Threshold lowered to 0.10 to catch lightly tinted item-name colours
+                bool isColored = sat > 0.10f && bri > 0.20f;
 
                 byte val = isColored ? (byte)0 : (byte)255;  // black text / white bg
                 pixels[i]     = val;
