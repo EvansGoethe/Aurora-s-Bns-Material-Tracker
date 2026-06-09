@@ -666,12 +666,35 @@ namespace BnsMaterialTracker.Views
 
         private async Task RunDungeonScanAsync(BitmapSource screenshot)
         {
+            // WinRT async operations (BitmapDecoder, OcrEngine) may complete on a
+            // background thread-pool thread instead of the UI thread.  Freezing the
+            // screenshot here makes it safe to access from any thread.
+            if (!screenshot.IsFrozen)
+            {
+                var clone = screenshot.Clone();
+                clone.Freeze();
+                screenshot = clone;
+            }
+
             TxtDungStatus.Text         = "🔍 辨識中...";
             DungResultPanel.Visibility = Visibility.Collapsed;
             BtnDungConfirm.IsEnabled   = false;
 
-            try { _dungScanResult = await DungeonScanService.ScanAsync(screenshot); }
-            catch (Exception ex) { TxtDungStatus.Text = "❌ " + ex.Message; return; }
+            DungeonScanResult? scanResult = null;
+            try { scanResult = await DungeonScanService.ScanAsync(screenshot); }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() => TxtDungStatus.Text = "❌ " + ex.Message);
+                return;
+            }
+            // Marshal all UI updates back to the UI thread in case the WinRT
+            // continuation ran on a background thread.
+            await Dispatcher.InvokeAsync(() => ApplyScanResult(scanResult));
+        }
+
+        private void ApplyScanResult(DungeonScanResult? scanResult)
+        {
+            _dungScanResult = scanResult;
 
             if (_dungScanResult == null)
             {

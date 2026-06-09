@@ -210,10 +210,11 @@ namespace BnsMaterialTracker.Services
                 float sat  = maxC > 0.001f ? (maxC - minC) / maxC : 0f;
                 float bri  = maxC;
 
-                // Colored text:  non-trivial saturation, not too dark, not pure white
-                // White text:    sat ≈ 0, bri ≈ 1 → excluded
-                // Dark bg:       bri < 0.28 → excluded
-                bool isColored = sat > 0.22f && bri > 0.28f && bri < 0.97f;
+                // Colored text:  non-trivial saturation and not too dark
+                //   BnS orange/gold item names: R=255 G≈165 B≈0 → bri=1.0, sat=1.0 → keep
+                // White / near-white text: sat ≈ 0 → excluded (no upper brightness limit needed)
+                // Dark background: bri < 0.28 → excluded → becomes white background
+                bool isColored = sat > 0.22f && bri > 0.28f;
 
                 byte val = isColored ? (byte)0 : (byte)255;  // black text / white bg
                 pixels[i]     = val;
@@ -224,7 +225,9 @@ namespace BnsMaterialTracker.Services
 
             double dpiX = src.DpiX > 0 ? src.DpiX : 96.0;
             double dpiY = src.DpiY > 0 ? src.DpiY : 96.0;
-            return BitmapSource.Create(w, h, dpiX, dpiY, PixelFormats.Bgra32, null, pixels, w * 4);
+            var result = BitmapSource.Create(w, h, dpiX, dpiY, PixelFormats.Bgra32, null, pixels, w * 4);
+            result.Freeze();   // allow cross-thread access in ToBitmapAsync
+            return result;
         }
 
         private static readonly HashSet<string> KnownHeaderWords = new()
