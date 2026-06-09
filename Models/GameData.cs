@@ -71,7 +71,13 @@ namespace BnsMaterialTracker.Models
         [JsonPropertyName("spiritUpgrades")]        public List<UpgradeStep> SpiritUpgrades        { get; set; } = new();
         [JsonPropertyName("guardianStoneUpgrades")] public List<UpgradeStep> GuardianStoneUpgrades { get; set; } = new();
         [JsonPropertyName("starUpgrades")]          public List<UpgradeStep> StarUpgrades          { get; set; } = new();
-        [JsonPropertyName("innerBraceletUpgrades")] public List<UpgradeStep> InnerBraceletUpgrades { get; set; } = new();
-        [JsonPropertyName("outerBraceletUpgrades")] public List<UpgradeStep> OuterBraceletUpgrades { get; set; } = new();
+        [JsonPropertyName("innerBraceletUpgrades")]     public List<UpgradeStep> InnerBraceletUpgrades     { get; set; } = new();
+        [JsonPropertyName("outerBraceletUpgrades")]     public List<UpgradeStep> OuterBraceletUpgrades     { get; set; } = new();
+        // 隕石升級
+        [JsonPropertyName("waterMeteoriteUpgrades")]     public List<UpgradeStep> WaterMeteoriteUpgrades     { get; set; } = new();
+        [JsonPropertyName("woodMeteoriteUpgrades")]      public List<UpgradeStep> WoodMeteoriteUpgrades      { get; set; } = new();
+        [JsonPropertyName("fireMeteoriteUpgrades")]      public List<UpgradeStep> FireMeteoriteUpgrades      { get; set; } = new();
+        [JsonPropertyName("earthMeteoriteUpgrades")]     public List<UpgradeStep> EarthMeteoriteUpgrades     { get; set; } = new();
+        [JsonPropertyName("lightningMeteoriteUpgrades")] public List<UpgradeStep> LightningMeteoriteUpgrades { get; set; } = new();
     }
 }

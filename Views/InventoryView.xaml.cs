@@ -49,6 +49,7 @@ namespace BnsMaterialTracker.Views
             ("star",         "inventory.star",         "⭐"),
             ("innerBracelet","inventory.innerBracelet","🔵"),
             ("outerBracelet","inventory.outerBracelet","🔴"),
+            ("dungeonReward","inventory.dungeonReward","🎁"),
             ("exchange",     "inventory.exchange",     "🎫"),
         };
 

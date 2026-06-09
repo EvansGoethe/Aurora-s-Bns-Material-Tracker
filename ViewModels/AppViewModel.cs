@@ -86,8 +86,13 @@ namespace BnsMaterialTracker.ViewModels
                 foreach (var u in uf.SpiritUpgrades)        AllUpgrades.Add(u);
                 foreach (var u in uf.GuardianStoneUpgrades) AllUpgrades.Add(u);
                 foreach (var u in uf.StarUpgrades)          AllUpgrades.Add(u);
-                foreach (var u in uf.InnerBraceletUpgrades) AllUpgrades.Add(u);
-                foreach (var u in uf.OuterBraceletUpgrades) AllUpgrades.Add(u);
+                foreach (var u in uf.InnerBraceletUpgrades)     AllUpgrades.Add(u);
+                foreach (var u in uf.OuterBraceletUpgrades)     AllUpgrades.Add(u);
+                foreach (var u in uf.WaterMeteoriteUpgrades)     AllUpgrades.Add(u);
+                foreach (var u in uf.WoodMeteoriteUpgrades)      AllUpgrades.Add(u);
+                foreach (var u in uf.FireMeteoriteUpgrades)      AllUpgrades.Add(u);
+                foreach (var u in uf.EarthMeteoriteUpgrades)     AllUpgrades.Add(u);
+                foreach (var u in uf.LightningMeteoriteUpgrades) AllUpgrades.Add(u);
             }
         }
 

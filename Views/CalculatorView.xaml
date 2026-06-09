@@ -239,6 +239,70 @@
               </ItemsControl>
             </Expander>
 
+            <!-- ▸ 隕石升級（水/木/火/土/雷） -->
+            <Expander x:Name="ExpMeteorite" IsExpanded="False">
+              <Expander.Header>
+                <TextBlock x:Name="TxtMeteoriteLabel" Text="☄️ 隕石升級"
+                           Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+              </Expander.Header>
+              <StackPanel Margin="4,2,0,4">
+                <TextBlock x:Name="TxtWaterMeteor" Text="💧 水隕石" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,4,0,2"/>
+                <ItemsControl x:Name="WaterMeteorList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtWoodMeteor" Text="🌿 木隕石" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="WoodMeteorList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtFireMeteor" Text="🔥 火隕石" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="FireMeteorList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtEarthMeteor" Text="⛰️ 土隕石" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="EarthMeteorList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="TxtLightningMeteor" Text="⚡ 雷隕石" FontSize="11"
+                           Foreground="{StaticResource TextMuted}" Margin="0,6,0,2"/>
+                <ItemsControl x:Name="LightningMeteorList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <CheckBox Content="{Binding Label}" IsChecked="{Binding Checked, Mode=TwoWay}"
+                                Margin="0,2" Checked="ChkChanged" Unchecked="ChkChanged"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Expander>
+
           </StackPanel>
         </ScrollViewer>
       </DockPanel>

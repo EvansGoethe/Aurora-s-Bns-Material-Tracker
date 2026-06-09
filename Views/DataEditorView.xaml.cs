@@ -73,7 +73,9 @@ namespace BnsMaterialTracker.Views
                 new CatOption("daily",  L10n.T("editor.type.daily")),
                 new CatOption("weekly", L10n.T("editor.type.weekly")),
             };
-            var cats = new[] {
+
+            // ── Material categories ─────────────────────────────────────────
+            CategoryOptions = new[] {
                 new CatOption("weapon",        "⚔️ " + L10n.T("editor.cat.weapon")),
                 new CatOption("bracelet",      "💠 " + L10n.T("calc.bracelet")),
                 new CatOption("necklace",      "📿 " + L10n.T("calc.necklace")),
@@ -88,11 +90,32 @@ namespace BnsMaterialTracker.Views
                 new CatOption("star",          "⭐ " + L10n.T("calc.star")),
                 new CatOption("innerBracelet", "🔵 " + L10n.T("calc.innerBracelet")),
                 new CatOption("outerBracelet", "🔴 " + L10n.T("calc.outerBracelet")),
+                new CatOption("dungeonReward", "🎁 " + L10n.T("editor.cat.dungeonReward")),
                 new CatOption("exchange",      "🎫 " + L10n.T("editor.cat.exchange")),
             };
-            CategoryOptions = cats;
-            // UpgradeCategoryOptions is the same list minus "exchange"
-            UpgradeCategoryOptions = cats[..^1];
+
+            // ── Upgrade categories (weapon/jewelry/other + 5 meteorite types) ─
+            UpgradeCategoryOptions = new[] {
+                new CatOption("weapon",          "⚔️ " + L10n.T("editor.cat.weapon")),
+                new CatOption("bracelet",        "💠 " + L10n.T("calc.bracelet")),
+                new CatOption("necklace",        "📿 " + L10n.T("calc.necklace")),
+                new CatOption("belt",            "🔶 " + L10n.T("calc.belt")),
+                new CatOption("gloves",          "🥊 " + L10n.T("calc.gloves")),
+                new CatOption("earring",         "💎 " + L10n.T("calc.earring")),
+                new CatOption("secretToken",     "🎴 " + L10n.T("calc.secretToken")),
+                new CatOption("divineToken",     "🃏 " + L10n.T("calc.divineToken")),
+                new CatOption("soul",            "👻 " + L10n.T("calc.soul")),
+                new CatOption("spirit",          "✨ " + L10n.T("calc.spirit")),
+                new CatOption("guardianStone",   "🛡️ " + L10n.T("calc.guardianStone")),
+                new CatOption("star",            "⭐ " + L10n.T("calc.star")),
+                new CatOption("innerBracelet",   "🔵 " + L10n.T("calc.innerBracelet")),
+                new CatOption("outerBracelet",   "🔴 " + L10n.T("calc.outerBracelet")),
+                new CatOption("waterMeteor",     "💧 " + L10n.T("calc.waterMeteor")),
+                new CatOption("woodMeteor",      "🌿 " + L10n.T("calc.woodMeteor")),
+                new CatOption("fireMeteor",      "🔥 " + L10n.T("calc.fireMeteor")),
+                new CatOption("earthMeteor",     "⛰️ " + L10n.T("calc.earthMeteor")),
+                new CatOption("lightningMeteor", "⚡ " + L10n.T("calc.lightningMeteor")),
+            };
 
             // Re-select upgrade category by key so the filter survives a language switch
             if (_selectedUpgradeCat != null)
@@ -329,13 +352,16 @@ namespace BnsMaterialTracker.Views
                     }
                 }
 
-                AddSteps(file.WeaponUpgrades);        AddSteps(file.BraceletUpgrades);
-                AddSteps(file.NecklaceUpgrades);      AddSteps(file.BeltUpgrades);
-                AddSteps(file.GlovesUpgrades);        AddSteps(file.EarringUpgrades);
-                AddSteps(file.SecretTokenUpgrades);   AddSteps(file.DivineTokenUpgrades);
-                AddSteps(file.SoulUpgrades);          AddSteps(file.SpiritUpgrades);
-                AddSteps(file.GuardianStoneUpgrades); AddSteps(file.StarUpgrades);
-                AddSteps(file.InnerBraceletUpgrades); AddSteps(file.OuterBraceletUpgrades);
+                AddSteps(file.WeaponUpgrades);            AddSteps(file.BraceletUpgrades);
+                AddSteps(file.NecklaceUpgrades);          AddSteps(file.BeltUpgrades);
+                AddSteps(file.GlovesUpgrades);            AddSteps(file.EarringUpgrades);
+                AddSteps(file.SecretTokenUpgrades);       AddSteps(file.DivineTokenUpgrades);
+                AddSteps(file.SoulUpgrades);              AddSteps(file.SpiritUpgrades);
+                AddSteps(file.GuardianStoneUpgrades);     AddSteps(file.StarUpgrades);
+                AddSteps(file.InnerBraceletUpgrades);     AddSteps(file.OuterBraceletUpgrades);
+                AddSteps(file.WaterMeteoriteUpgrades);    AddSteps(file.WoodMeteoriteUpgrades);
+                AddSteps(file.FireMeteoriteUpgrades);     AddSteps(file.EarthMeteoriteUpgrades);
+                AddSteps(file.LightningMeteoriteUpgrades);
             }
             catch { }
         }
@@ -477,20 +503,25 @@ namespace BnsMaterialTracker.Views
 
             var file = new UpgradesFile
             {
-                WeaponUpgrades        = ToSteps("weapon"),
-                BraceletUpgrades      = ToSteps("bracelet"),
-                NecklaceUpgrades      = ToSteps("necklace"),
-                BeltUpgrades          = ToSteps("belt"),
-                GlovesUpgrades        = ToSteps("gloves"),
-                EarringUpgrades       = ToSteps("earring"),
-                SecretTokenUpgrades   = ToSteps("secretToken"),
-                DivineTokenUpgrades   = ToSteps("divineToken"),
-                SoulUpgrades          = ToSteps("soul"),
-                SpiritUpgrades        = ToSteps("spirit"),
-                GuardianStoneUpgrades = ToSteps("guardianStone"),
-                StarUpgrades          = ToSteps("star"),
-                InnerBraceletUpgrades = ToSteps("innerBracelet"),
-                OuterBraceletUpgrades = ToSteps("outerBracelet"),
+                WeaponUpgrades            = ToSteps("weapon"),
+                BraceletUpgrades          = ToSteps("bracelet"),
+                NecklaceUpgrades          = ToSteps("necklace"),
+                BeltUpgrades              = ToSteps("belt"),
+                GlovesUpgrades            = ToSteps("gloves"),
+                EarringUpgrades           = ToSteps("earring"),
+                SecretTokenUpgrades       = ToSteps("secretToken"),
+                DivineTokenUpgrades       = ToSteps("divineToken"),
+                SoulUpgrades              = ToSteps("soul"),
+                SpiritUpgrades            = ToSteps("spirit"),
+                GuardianStoneUpgrades     = ToSteps("guardianStone"),
+                StarUpgrades              = ToSteps("star"),
+                InnerBraceletUpgrades     = ToSteps("innerBracelet"),
+                OuterBraceletUpgrades     = ToSteps("outerBracelet"),
+                WaterMeteoriteUpgrades     = ToSteps("waterMeteor"),
+                WoodMeteoriteUpgrades      = ToSteps("woodMeteor"),
+                FireMeteoriteUpgrades      = ToSteps("fireMeteor"),
+                EarthMeteoriteUpgrades     = ToSteps("earthMeteor"),
+                LightningMeteoriteUpgrades = ToSteps("lightningMeteor"),
             };
             var path = Path.Combine(DataService.GameDataDir, "upgrades.json");
             File.WriteAllText(path, JsonSerializer.Serialize(file, _jsonOpts));
@@ -567,7 +598,7 @@ namespace BnsMaterialTracker.Views
             if (MaterialList.Any(m => m.Name == name)) return;
 
             string id = SanitizeId(name) + "_" + MaterialList.Count;
-            var mat = new MaterialRow { Id = id, Name = name, Icon = "📦", Category = "weapon" };
+            var mat = new MaterialRow { Id = id, Name = name, Icon = "📦", Category = "dungeonReward" };
             MaterialList.Add(mat);
             _pendingNewMaterials.Add(mat);
 

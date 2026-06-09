@@ -39,8 +39,13 @@ namespace BnsMaterialTracker.Views
         private readonly List<UpgradeItem> _spirit        = new();
         private readonly List<UpgradeItem> _guardianStone = new();
         private readonly List<UpgradeItem> _star          = new();
-        private readonly List<UpgradeItem> _innerBracelet = new();
-        private readonly List<UpgradeItem> _outerBracelet = new();
+        private readonly List<UpgradeItem> _innerBracelet    = new();
+        private readonly List<UpgradeItem> _outerBracelet    = new();
+        private readonly List<UpgradeItem> _waterMeteor      = new();
+        private readonly List<UpgradeItem> _woodMeteor       = new();
+        private readonly List<UpgradeItem> _fireMeteor       = new();
+        private readonly List<UpgradeItem> _earthMeteor      = new();
+        private readonly List<UpgradeItem> _lightningMeteor  = new();
 
         public CalculatorView() => InitializeComponent();
 
@@ -64,8 +69,14 @@ namespace BnsMaterialTracker.Views
             TxtSpirit.Text        = "✨ " + L10n.T("calc.spirit");
             TxtGuardianStone.Text = "🛡️ " + L10n.T("calc.guardianStone");
             TxtStar.Text          = "⭐ " + L10n.T("calc.star");
-            TxtInnerBracelet.Text = "🔵 " + L10n.T("calc.innerBracelet");
-            TxtOuterBracelet.Text = "🔴 " + L10n.T("calc.outerBracelet");
+            TxtInnerBracelet.Text  = "🔵 " + L10n.T("calc.innerBracelet");
+            TxtOuterBracelet.Text  = "🔴 " + L10n.T("calc.outerBracelet");
+            TxtMeteoriteLabel.Text = "☄️ " + L10n.T("calc.meteorite");
+            TxtWaterMeteor.Text    = "💧 " + L10n.T("calc.waterMeteor");
+            TxtWoodMeteor.Text     = "🌿 " + L10n.T("calc.woodMeteor");
+            TxtFireMeteor.Text     = "🔥 " + L10n.T("calc.fireMeteor");
+            TxtEarthMeteor.Text    = "⛰️ " + L10n.T("calc.earthMeteor");
+            TxtLightningMeteor.Text= "⚡ " + L10n.T("calc.lightningMeteor");
             TxtSaveGoal.Text      = L10n.T("calc.saveGoal");
             TxtTotalRequired.Text = L10n.T("calc.totalRequired");
             TxtShortfalls.Text    = L10n.T("calc.shortfalls");
@@ -85,8 +96,13 @@ namespace BnsMaterialTracker.Views
             Rebuild(_spirit,        vm, "spirit",        SpiritList);
             Rebuild(_guardianStone, vm, "guardianStone", GuardianStoneList);
             Rebuild(_star,          vm, "star",          StarList);
-            Rebuild(_innerBracelet, vm, "innerBracelet", InnerBraceletList);
-            Rebuild(_outerBracelet, vm, "outerBracelet", OuterBraceletList);
+            Rebuild(_innerBracelet,   vm, "innerBracelet",    InnerBraceletList);
+            Rebuild(_outerBracelet,   vm, "outerBracelet",    OuterBraceletList);
+            Rebuild(_waterMeteor,     vm, "waterMeteor",      WaterMeteorList);
+            Rebuild(_woodMeteor,      vm, "woodMeteor",       WoodMeteorList);
+            Rebuild(_fireMeteor,      vm, "fireMeteor",       FireMeteorList);
+            Rebuild(_earthMeteor,     vm, "earthMeteor",      EarthMeteorList);
+            Rebuild(_lightningMeteor, vm, "lightningMeteor",  LightningMeteorList);
 
             UpdateResults();
         }
@@ -108,7 +124,9 @@ namespace BnsMaterialTracker.Views
                .Concat(_gloves).Concat(_earring).Concat(_secretToken)
                .Concat(_divineToken).Concat(_soul).Concat(_spirit)
                .Concat(_guardianStone).Concat(_star)
-               .Concat(_innerBracelet).Concat(_outerBracelet);
+               .Concat(_innerBracelet).Concat(_outerBracelet)
+               .Concat(_waterMeteor).Concat(_woodMeteor).Concat(_fireMeteor)
+               .Concat(_earthMeteor).Concat(_lightningMeteor);
 
         private void ChkChanged(object sender, RoutedEventArgs e) => UpdateResults();
 

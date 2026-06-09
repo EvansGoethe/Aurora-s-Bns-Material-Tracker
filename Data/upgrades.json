@@ -196,5 +196,11 @@
       "fromStage": 2, "toStage": 3, "goldCost": 90,
       "requirements": [ { "materialId": "outer_bracelet", "amount": 25 } ]
     }
-  ]
+  ],
+
+  "waterMeteoriteUpgrades": [],
+  "woodMeteoriteUpgrades": [],
+  "fireMeteoriteUpgrades": [],
+  "earthMeteoriteUpgrades": [],
+  "lightningMeteoriteUpgrades": []
 }
