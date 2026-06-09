@@ -521,7 +521,7 @@
             <!-- Dungeon name (editable) -->
             <TextBlock Text="副本名稱（OCR 辨識結果，請確認是否正確）" FontSize="11"
                        Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4"/>
-            <TextBox x:Name="TxtDungName" Height="34" FontSize="13" Margin="0,0,0,12"/>
+            <TextBox x:Name="TxtDungName" Height="40" FontSize="13" Margin="0,0,0,12"/>
 
             <!-- Entries preview -->
             <TextBlock Text="將新增以下條目：" FontSize="11"
@@ -569,11 +569,11 @@
                 <ColumnDefinition Width="6"/>
                 <ColumnDefinition Width="40"/>
               </Grid.ColumnDefinitions>
-              <TextBox x:Name="TxtNewMatName" Grid.Column="0" Height="32" FontSize="12"
+              <TextBox x:Name="TxtNewMatName" Grid.Column="0" Height="40" FontSize="12"
                        VerticalContentAlignment="Center"
                        KeyDown="TxtNewMatName_KeyDown"/>
               <Button x:Name="BtnAddNewMat" Grid.Column="2" Content="＋"
-                      Style="{StaticResource BtnPrimary}" Height="32" Width="40"
+                      Style="{StaticResource BtnPrimary}" Height="40" Width="40"
                       Click="BtnAddNewMat_Click"/>
             </Grid>
 
