@@ -74,10 +74,10 @@ Get-ChildItem "$Root\installer_output" -File -ErrorAction SilentlyContinue |
 & $iscc /DAppVersion=$Version "$Root\installer.iss"
 if ($LASTEXITCODE -ne 0) { Write-Host "Installer build failed." -ForegroundColor Red; exit 1 }
 
-$SetupFile = "$Root\installer_output\Setup_Aurora_BnS_Material_Tracker_v${Version}.exe"
+$SetupFile = "$Root\installer_output\Aurora's BnS Material Tracker v${Version} Setup.exe"
 
 # ── 3b. Create portable ZIP ───────────────────────────────────
-$ZipName    = "Aurora_BnS_Material_Tracker_v${Version}_portable.zip"
+$ZipName    = "Aurora's BnS Material Tracker v${Version} Portable.zip"
 $ZipPath    = "$Root\installer_output\$ZipName"
 $ZipStaging = "$Root\installer_output\_zip_staging"
 
