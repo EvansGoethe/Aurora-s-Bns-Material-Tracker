@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
@@ -24,8 +25,8 @@ namespace BnsMaterialTracker.Services
         public int                  PartySize      { get; set; } = 0;
         public string               Mode           { get; set; } = "hero";  // "hero" | "demon"
         public List<DungeonSection> Sections       { get; set; } = new();
-        public string               RawOcrText     { get; set; } = "";      // for debugging
-        public List<string>         DetectedTokens { get; set; } = new();   // word-level OCR tokens (material candidates)
+        public string               RawOcrText     { get; set; } = "";      // for debug display
+        public List<string>         DetectedTokens { get; set; } = new();   // item-color word tokens
     }
 
     public static class DungeonScanService
@@ -42,40 +43,188 @@ namespace BnsMaterialTracker.Services
             var soft = await ToBitmapAsync(screenshot);
             if (soft == null) return null;
 
+            // ── Pass 1: Full-image OCR ──────────────────────────────────────
+            // Extracts dungeon name, party size, mode, section headers with
+            // their approximate Y-positions in the original image.
             var ocrResult = await engine.RecognizeAsync(soft);
             var result    = Parse(ocrResult.Text);
             result.RawOcrText = ocrResult.Text;
 
-            // ── Word-level post-processing ──────────────────────────────────
             var allWords = ocrResult.Lines.SelectMany(l => l.Words).ToList();
 
-            // Dungeon name: use the topmost-leftmost CJK word (title text in BnS UI
-            // is always at the top-left in a larger font, so it's a separate OcrWord).
+            // Dungeon name: topmost-leftmost short pure-CJK word
             var titleWord = allWords
                 .Where(w => Regex.IsMatch(w.Text.Trim(), @"[一-鿿㐀-䶿]"))
                 .OrderBy(w => w.BoundingRect.Top)
                 .ThenBy(w => w.BoundingRect.Left)
                 .FirstOrDefault();
-
             if (titleWord != null)
             {
                 string wt = titleWord.Text.Trim();
-                // Accept as name only if it's a short pure-CJK token
                 if (Regex.IsMatch(wt, @"^[一-鿿㐀-䶿]{2,6}$"))
                     result.DungeonName = wt;
-                // else fall back to the Parse-based extraction already done
             }
 
-            // Material candidates: word-level tokens that look like item names
-            result.DetectedTokens = allWords
-                .Select(w => w.Text.Trim())
-                .Where(t => Regex.IsMatch(t, @"^[一-鿿㐀-䶿][一-鿿㐀-䶿\d]*[一-鿿㐀-䶿]$"))
-                .Where(t => t.Length >= 2 && t.Length <= 14)
-                .Where(t => !KnownHeaderWords.Contains(t) && !IsNoiseItem(t))
-                .Distinct()
-                .ToList();
+            // Locate each section header's Y-coordinate in the image
+            var headerAnchors = FindHeaderAnchors(allWords, result.Sections);
+
+            // ── Pass 2: Color-filtered OCR ─────────────────────────────────
+            // BnS item names are rendered in non-white colored text (orange, gold,
+            // blue, etc.), while section headers and description text are white.
+            // Isolate only the colored pixels → black-on-white for OCR, so OCR
+            // reads item names without interference from lore/description text.
+            await EnrichSectionsFromColor(engine, screenshot, result, headerAnchors);
 
             return result;
+        }
+
+        // ── Section header Y-anchor detection ──────────────────────────────
+        // For each parsed section, find the OCR word whose text best matches the
+        // section's header label, and record its Y coordinate as an anchor.
+
+        private static Dictionary<string, double> FindHeaderAnchors(
+            IReadOnlyList<OcrWord> words, List<DungeonSection> sections)
+        {
+            var anchors = new Dictionary<string, double>();
+
+            foreach (var sec in sections)
+            {
+                string label = sec.Label; // e.g. "共通獎勵"
+                OcrWord? best    = null;
+                int      bestLen = 0;
+
+                foreach (var w in words)
+                {
+                    string wt = w.Text.Replace(" ", "");
+                    // Slide a window over wt looking for the longest substring
+                    // that is also a substring of the known label.
+                    for (int len = Math.Min(wt.Length, label.Length); len >= 2; len--)
+                    {
+                        for (int start = 0; start <= wt.Length - len; start++)
+                        {
+                            if (label.Contains(wt.Substring(start, len), StringComparison.Ordinal)
+                                && len > bestLen)
+                            {
+                                bestLen = len;
+                                best    = w;
+                            }
+                        }
+                    }
+                }
+
+                if (best != null && bestLen >= 2)
+                    anchors[sec.Difficulty] = best.BoundingRect.Top;
+            }
+
+            return anchors;
+        }
+
+        // ── Color-filtered OCR pass ─────────────────────────────────────────
+
+        private static async Task EnrichSectionsFromColor(
+            OcrEngine engine,
+            BitmapSource screenshot,
+            DungeonScanResult result,
+            Dictionary<string, double> headerAnchors)
+        {
+            // Ordered (anchorY, difficulty) list for section assignment
+            var sortedAnchors = headerAnchors
+                .Select(kv => (Y: kv.Value, Diff: kv.Key))
+                .OrderBy(a => a.Y)
+                .ToList();
+
+            // Filter image → keep only colored (item-name) pixels, rest → white
+            var filteredBmp  = IsolateItemText(screenshot);
+            var filteredSoft = await ToBitmapAsync(filteredBmp);
+            if (filteredSoft == null) return;
+
+            var filteredOcr = await engine.RecognizeAsync(filteredSoft);
+
+            var sectionItemsMap = result.Sections.ToDictionary(s => s.Difficulty, _ => new List<string>());
+            var allColorTokens  = new List<string>();
+
+            foreach (var word in filteredOcr.Lines.SelectMany(l => l.Words))
+            {
+                // Normalise: strip spaces OCR sometimes inserts between chars
+                string t = Regex.Replace(word.Text.Trim(), @"\s+", "");
+                if (t.Length < 2 || t.Length > 14) continue;
+                if (!Regex.IsMatch(t, @"[一-鿿㐀-䶿]{2,}")) continue;
+                if (KnownHeaderWords.Contains(t)) continue;
+                if (IsNoiseItem(t)) continue;
+
+                allColorTokens.Add(t);
+
+                if (sortedAnchors.Count > 0)
+                {
+                    // Assign word to the section whose header is just above it
+                    double wordY         = word.BoundingRect.Top + word.BoundingRect.Height / 2.0;
+                    string assignedDiff  = sortedAnchors[0].Diff;
+                    foreach (var (anchorY, diff) in sortedAnchors)
+                    {
+                        if (anchorY <= wordY) assignedDiff = diff;
+                        else break;
+                    }
+                    if (sectionItemsMap.ContainsKey(assignedDiff))
+                        sectionItemsMap[assignedDiff].Add(t);
+                }
+            }
+
+            // Push colour-detected items into each section
+            foreach (var sec in result.Sections)
+            {
+                if (sectionItemsMap.TryGetValue(sec.Difficulty, out var items) && items.Count > 0)
+                {
+                    var distinct = items.Distinct().ToList();
+                    sec.ItemNames = distinct;
+                    // Prepend to RawText so DataEditorView's substring matching works
+                    sec.RawText = string.Join("", distinct) + sec.RawText;
+                }
+            }
+
+            result.DetectedTokens = allColorTokens.Distinct().ToList();
+        }
+
+        // ── Colour isolation ────────────────────────────────────────────────
+        // BnS reward-item names use non-white colored text (orange/gold/blue, etc.).
+        // Description text and section headers are near-white.
+        // Algorithm: for each pixel convert to HSV; if saturation > threshold and
+        // brightness in mid range → colored text → output black; else → output white.
+        // Result: black item-name glyphs on white background, ideal for OCR.
+
+        private static BitmapSource IsolateItemText(BitmapSource src)
+        {
+            var fmt = src.Format == PixelFormats.Bgra32
+                ? src
+                : new FormatConvertedBitmap(src, PixelFormats.Bgra32, null, 0);
+
+            int w = fmt.PixelWidth, h = fmt.PixelHeight;
+            var pixels = new byte[w * h * 4];
+            fmt.CopyPixels(pixels, w * 4, 0);
+
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                byte bv = pixels[i], gv = pixels[i + 1], rv = pixels[i + 2];
+
+                float maxC = Math.Max(rv, Math.Max(gv, bv)) / 255f;
+                float minC = Math.Min(rv, Math.Min(gv, bv)) / 255f;
+                float sat  = maxC > 0.001f ? (maxC - minC) / maxC : 0f;
+                float bri  = maxC;
+
+                // Colored text:  non-trivial saturation, not too dark, not pure white
+                // White text:    sat ≈ 0, bri ≈ 1 → excluded
+                // Dark bg:       bri < 0.28 → excluded
+                bool isColored = sat > 0.22f && bri > 0.28f && bri < 0.97f;
+
+                byte val = isColored ? (byte)0 : (byte)255;  // black text / white bg
+                pixels[i]     = val;
+                pixels[i + 1] = val;
+                pixels[i + 2] = val;
+                pixels[i + 3] = 255;
+            }
+
+            double dpiX = src.DpiX > 0 ? src.DpiX : 96.0;
+            double dpiY = src.DpiY > 0 ? src.DpiY : 96.0;
+            return BitmapSource.Create(w, h, dpiX, dpiY, PixelFormats.Bgra32, null, pixels, w * 4);
         }
 
         private static readonly HashSet<string> KnownHeaderWords = new()
@@ -139,9 +288,6 @@ namespace BnsMaterialTracker.Services
             found.Sort((a, b) => a.idx.CompareTo(b.idx));
 
             // ── Dungeon name ────────────────────────────────────────────────
-            // The dungeon name is the first short CJK sequence, but OCR merges it
-            // with the description that follows (e.g. "火田民村由於雷雲聚集之…").
-            // We detect where the description begins using common openers and cut there.
             int firstHdrPos = found.Count > 0 ? found[0].idx : compact.Length;
             string preamble = compact[..Math.Min(firstHdrPos, compact.Length)];
             var cjkM = Regex.Match(preamble, @"[一-鿿㐀-䶿]{2,}");
