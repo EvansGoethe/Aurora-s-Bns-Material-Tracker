@@ -15,6 +15,7 @@
     <SolidColorBrush x:Key="TextSecondary" Color="#7bb8ae"/>
     <SolidColorBrush x:Key="TextMuted"     Color="#4a8a80"/>
     <SolidColorBrush x:Key="AccentBlue"    Color="#0bd49e"/>
+    <SolidColorBrush x:Key="AccentColor"   Color="#0bd49e"/>  <!-- alias for AccentBlue, used in DataTemplates -->
     <SolidColorBrush x:Key="AccentGreen"   Color="#22c55e"/>
     <SolidColorBrush x:Key="AccentRed"     Color="#ef4444"/>
     <SolidColorBrush x:Key="AccentYellow"  Color="#eab308"/>
