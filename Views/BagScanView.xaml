@@ -143,23 +143,23 @@
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="44"/>
                       <ColumnDefinition Width="*"/>
-                      <ColumnDefinition Width="28"/>
+                      <ColumnDefinition Width="36"/>
                     </Grid.ColumnDefinitions>
                     <!-- Preview thumbnail -->
                     <Image Grid.Column="0" Source="{Binding Preview}"
                            Width="40" Height="40" Stretch="Uniform"
                            RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                     <!-- Material name -->
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,4,0">
                       <TextBlock Text="{Binding MatDisplay}" FontSize="13"
                                  TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                     <!-- Delete button -->
-                    <Button Grid.Column="2" Content="✕" Width="24" Height="24"
-                            FontSize="11"
+                    <Button Grid.Column="2" Content="✕" Width="32" Height="32"
+                            FontSize="14"
                             Tag="{Binding MaterialId}"
                             Style="{StaticResource BtnGhost}"
-                            Foreground="{StaticResource TextMuted}"
+                            Foreground="{StaticResource AccentRed}"
                             Click="BtnDeleteTemplate_Click"/>
                   </Grid>
                 </DataTemplate>
